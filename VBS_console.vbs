@@ -1,13 +1,7 @@
-
 Dim Arg, var1
 Set Arg = WScript.Arguments
 
-'Parameter1, begin with index0
 var1 = Arg(0)
-
-msgbox "Commit message is " & var1
-
-'Clear the objects at the end of your script.
 
 stdout = Console(var1)
 MsgBox stdout
