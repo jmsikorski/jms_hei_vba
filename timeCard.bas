@@ -114,7 +114,7 @@ auth_retry:
         ElseIf ans = vbRetry Then
             GoTo auth_retry
         ElseIf ans = vbAbort Then
-            If Environ$("username") = "jsikorski1" Then
+            If Environ$("username") = "jsikorski" Then
                 Exit Sub
             Else
                 ThisWorkbook.Close False
@@ -150,7 +150,7 @@ auth_retry:
     job = vbNullString
     Set mMenu = New mainMenu
     ThisWorkbook.Protect xPass, True, False
-    If user <> "jsikorski1" Then
+    If user <> "jsikorski" Then
         mMenu.Show
     ElseIf ld = True Then
         mMenu.Show
@@ -554,7 +554,7 @@ Private Sub hide_key()
 End Sub
 
 Public Function publicEncryptPassword(pw As String) As String
-    If Environ$("username") <> "jsikorski1" Then
+    If Environ$("username") <> "jsikorski" Then
         If InputBox("Authorization code:", "RESTRICED") <> 12292018 Then
             publicEncryptPassword = "ERROR"
             Exit Function
@@ -607,7 +607,7 @@ Public Function file_auth(Optional pw As String) As Integer
     Set rg = ThisWorkbook.Worksheets("USER").Range("A" & 2)
     Dim auth As Integer
     Dim datPath As String
-'    If user = "jsikorski1" Then
+'    If user = "jsikorski" Then
 '        file_auth = 1
 '        Exit Function
 '    End If
@@ -673,7 +673,7 @@ login_retry:
                 Loop
             Else
                 MsgBox "You have made 3 failed attempts!", 16, "FAILED UNLOCK"
-                If user <> "jsikorski1" Then
+                If user <> "jsikorski" Then
                     Unload loginMenu
                     Workbooks(launcher).Worksheets(1).Range("appRunning") = False
                     ThisWorkbook.Close False

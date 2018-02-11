@@ -59,7 +59,7 @@ Public Sub get_user_list()
 End Sub
 
 Public Sub extract_users()
-    If Environ$("Username") = "jsikorski1" Then
+    If Environ$("Username") = "jsikorski" Then
         Application.DisplayAlerts = False
         Application.ScreenUpdating = False
         showBooks
