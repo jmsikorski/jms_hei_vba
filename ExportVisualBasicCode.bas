@@ -3,7 +3,7 @@ Attribute VB_Name = "ExportVisualBasicCode"
 ' Requires enabling the Excel setting in Options/Trust Center/Trust Center Settings/Macro Settings/Trust access to the VBA project object model
 
 Public Sub callExportVBA()
-    ExportVBA
+    ExportVBA ThisWorkbook.name
 End Sub
 
 Public Sub ExportVBA(Optional xlFile As String)
@@ -11,7 +11,7 @@ Public Sub ExportVBA(Optional xlFile As String)
     Dim mFile As String
     If Environ$("username") <> "jsikorski" Then
     End If
-    ans = MsgBox("Export?", vbYesNo, ThisWorkbook.Name)
+    ans = MsgBox("Export?", vbYesNo, ThisWorkbook.name)
     If ans <> vbYes Then
       Exit Sub
     End If
@@ -31,7 +31,7 @@ Public Sub ExportVBA(Optional xlFile As String)
     Dim directory As Variant
     Dim xFileDir
     If xlFile <> "" Then
-        ans = MsgBox("Publish?", vbYesNo, ThisWorkbook.Name)
+        ans = MsgBox("Publish?", vbYesNo, ThisWorkbook.name)
         If Left(xlFile, 13) = "Time Card Gen" Then
             xFileDir = "Generator"
             mFile = "hei_time_beta1_gen"
@@ -61,7 +61,7 @@ Public Sub ExportVBA(Optional xlFile As String)
         ReDim dirs(1)
     End If
     dirs(1) = "C:\Users\jsikorski\Documents\VBAProjectFiles\ALL VBA CODE\jms_hei_vba"
-    dirs(0) = "C:\Users\jsikorski\Documents\VBAProjectFiles\ALL VBA CODE\jms_hei_vba\" & ThisWorkbook.Name & "_code"
+    dirs(0) = "C:\Users\jsikorski\Documents\VBAProjectFiles\ALL VBA CODE\jms_hei_vba\" & ThisWorkbook.name & "_code"
     
     count = 0
 
@@ -94,22 +94,22 @@ Public Sub ExportVBA(Optional xlFile As String)
             On Error Resume Next
             Err.Clear
             If directory = dirs(1) Then
-                If Left(VBComponent.Name, 12) = "ThisWorkbook" Or _
-                  Left(VBComponent.Name, 5) = "Sheet" Then
-                    path = dirs(0) & "\" & VBComponent.Name & extension
+                If Left(VBComponent.name, 12) = "ThisWorkbook" Or _
+                  Left(VBComponent.name, 5) = "Sheet" Then
+                    path = dirs(0) & "\" & VBComponent.name & extension
                 Else
-                    path = dirs(1) & "\" & VBComponent.Name & extension
+                    path = dirs(1) & "\" & VBComponent.name & extension
                 End If
             Else
-                path = directory & "\" & VBComponent.Name & extension
+                path = directory & "\" & VBComponent.name & extension
             End If
             Call VBComponent.Export(path)
 
             If Err.Number <> 0 Then
-                 Call MsgBox("Failed to export " & VBComponent.Name & " to " & path, vbCritical)
+                 Call MsgBox("Failed to export " & VBComponent.name & " to " & path, vbCritical)
             Else
                 count = count + 1
-                Debug.Print "Exported " & Left$(VBComponent.Name & ":" & Space(Padding), Padding) & path
+                Debug.Print "Exported " & Left$(VBComponent.name & ":" & Space(Padding), Padding) & path
             End If
 
             On Error GoTo 0
@@ -121,10 +121,10 @@ Public Sub ExportVBA(Optional xlFile As String)
     If ans = vbYes Then
         On Error Resume Next
         Dim commitMessage As String
-        commitMessage = InputBox("Commit Message: ", "MESSAGE", Left(ThisWorkbook.Name, Len(ThisWorkbook.Name) - 5))
+        commitMessage = InputBox("Commit Message: ", "MESSAGE", Left(ThisWorkbook.name, Len(ThisWorkbook.name) - 5))
         VBA_IDE_main.gitCommit commitMessage, dirs(3)
         On Error GoTo 0
-        ans = MsgBox("Release?", vbYesNo, ThisWorkbook.Name)
+        ans = MsgBox("Release?", vbYesNo, ThisWorkbook.name)
         If ans = vbYes Then
             Zip_All_Files_in_Folder Left(dirs(2), Len(dirs(2)) - Len(xFileDir)), "C:\Users\jsikorski\Helix Electric Inc\TeslaTimeCard - Documents\Time Card Files\Data"
         End If
@@ -209,7 +209,7 @@ retry:
 close_file:
     Err.Clear
     Dim ans As Integer
-    ans = MsgBox("Unable to remove " & xFile.Name, vbAbortRetryIgnore + vbCritical, "ERROR!")
+    ans = MsgBox("Unable to remove " & xFile.name, vbAbortRetryIgnore + vbCritical, "ERROR!")
     If ans = vbRetry Then
         Resume
     ElseIf ans = vbAbort Then
@@ -235,8 +235,8 @@ Public Sub importDataFile()
     xFolder = ThisWorkbook.path
     
     For Each xFile In FSO.GetFolder(xFolder).Files
-        If FSO.GetExtensionName(xFile.Name) = "xlsx" Or FSO.GetExtensionName(xFile.Name) = "xlsm" Then
-            FSO.CopyFile xFile, ThisWorkbook.Worksheets(1).Range("aPath") & "/" & xFile.Name
+        If FSO.GetExtensionName(xFile.name) = "xlsx" Or FSO.GetExtensionName(xFile.name) = "xlsm" Then
+            FSO.CopyFile xFile, ThisWorkbook.Worksheets(1).Range("aPath") & "/" & xFile.name
         End If
     Next
 End Sub
@@ -357,7 +357,7 @@ Public Sub ImportModules(Optional codeFolder As String)
         codeFolder = codeFolder & "\Time Card Project\installer"
     End If
     
-    If ActiveWorkbook.Name = ThisWorkbook.Name Then
+    If ActiveWorkbook.name = ThisWorkbook.name Then
         MsgBox "Select another destination workbook" & _
         "Not possible to import in this workbook "
         Exit Sub
@@ -370,7 +370,7 @@ Public Sub ImportModules(Optional codeFolder As String)
     End If
 
     ''' NOTE: This workbook must be open in Excel.
-    szTargetWorkbook = ActiveWorkbook.Name
+    szTargetWorkbook = ActiveWorkbook.name
     
     Set wkbTarget = Application.Workbooks(szTargetWorkbook)
     
@@ -399,17 +399,17 @@ Public Sub ImportModules(Optional codeFolder As String)
     ''' to the ActiveWorkbook.
     For Each objFile In objFSO.GetFolder(szImportPath).Files
     
-        If (objFSO.GetExtensionName(objFile.Name) = "cls") Then
-            Debug.Print objFile.Name
-            If Left(objFile.Name, 12) = "ThisWorkbook" Then
+        If (objFSO.GetExtensionName(objFile.name) = "cls") Then
+            Debug.Print objFile.name
+            If Left(objFile.name, 12) = "ThisWorkbook" Then
                 With ActiveWorkbook.VBProject.VBComponents("ThisWorkbook").CodeModule
                     .DeleteLines StartLine:=1, count:=.CountOfLines
                     .AddFromFile objFile.path
                     .DeleteLines StartLine:=1, count:=4
                 End With
-            ElseIf Left(objFile.Name, 5) = "Sheet" Then
+            ElseIf Left(objFile.name, 5) = "Sheet" Then
                 On Error Resume Next
-                With ActiveWorkbook.VBProject.VBComponents(Left(objFile.Name, Len(objFile.Name) - 4)).CodeModule
+                With ActiveWorkbook.VBProject.VBComponents(Left(objFile.name, Len(objFile.name) - 4)).CodeModule
                     .DeleteLines StartLine:=1, count:=.CountOfLines
                     .AddFromFile objFile.path
                     .DeleteLines StartLine:=1, count:=4
@@ -419,10 +419,10 @@ Public Sub ImportModules(Optional codeFolder As String)
                 On Error GoTo 0
             End If
         
-        ElseIf (objFSO.GetExtensionName(objFile.Name) = "frm") Or _
-            (objFSO.GetExtensionName(objFile.Name) = "bas") Then
-            Debug.Print objFile.Name
-            If objFile.Name <> "main_module.bas" Then
+        ElseIf (objFSO.GetExtensionName(objFile.name) = "frm") Or _
+            (objFSO.GetExtensionName(objFile.name) = "bas") Then
+            Debug.Print objFile.name
+            If objFile.name <> "main_module.bas" Then
                 cmpComponents.Import objFile.path
             End If
         End If
@@ -478,7 +478,7 @@ Function DeleteVBAModulesAndUserForms(Optional saveModule As String)
         End If
         Set vbProj = ActiveWorkbook.VBProject
         For Each VBComp In vbProj.VBComponents
-            If VBComp.Name <> saveModule Then
+            If VBComp.name <> saveModule Then
                 If VBComp.Type = vbext_ct_Document Then
                     'Thisworkbook or worksheet module
                     'We do nothing
