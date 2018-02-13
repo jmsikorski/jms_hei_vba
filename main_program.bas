@@ -108,7 +108,6 @@ End Sub
 
 Public Function main_uninstall(Optional reinstall As Boolean) As Integer
     'On Error GoTo uninstall_err
-    Stop
     ans = MsgBox("Are you sure you want to uninstall " & Left(ThisWorkbook.Name, Len(ThisWorkbook.Name) - 5) & "?", vbExclamation + vbOKCancel, "CONFIRM UNINSTALL")
     If ans <> vbOK Then
         Exit Function
@@ -318,6 +317,7 @@ Public Sub main_run()
     Set ws = ThisWorkbook.Worksheets(dt)
     ws.Unprotect pw
     i = 0
+    Stop
     Application.WindowState = xlMaximized
 '    If ws.Range("apprunning") = False Then
 '        ans = MsgBox("Quit?", vbQuestion + vbYesNoCancel, "Helix Time Card Gen")
