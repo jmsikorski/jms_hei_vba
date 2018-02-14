@@ -266,19 +266,19 @@ Private Function getLeadSheets(xStrPath As String) As String
 
 End Function
 
-Public Function loadShifts(Optional test As Boolean) As Integer
+Public Function loadShifts(Optional tEst As Boolean) As Integer
     'On Error GoTo shift_err
     Dim wb_arr() As String
     Dim lead_arr As String
     Dim xlPath As String
     Dim we As String
     Dim hiddenApp As New Excel.Application
-    If test Then
+    If tEst Then
         jobNum = "461705"
         week = calcWeek(43127)
     End If
     we = Format(week, "mm.dd.yy")
-    xlPath = jobPath & "\" & jobNum & "\Week_" & we & "\TimeSheets\"
+    xlPath = jobPath & jobNum & "\Week_" & we & "\TimeSheets\"
     lead_arr = getLeadSheets(xlPath)
     wb_arr = Split(lead_arr, ",")
     For i = 0 To UBound(wb_arr)
@@ -302,8 +302,8 @@ Public Function loadShifts(Optional test As Boolean) As Integer
             For Each trng In rng
                 If trng.Value = weekRoster(l, e).getNum Then
                     Dim tPhase() As String
-                    Dim shft As shift
-                    Set shft = New shift
+                    Dim shft As Shift
+                    Set shft = New Shift
                     shft.setDay = trng.Offset(0, -3)
                     shft.setHrs = trng.Offset(0, 1)
                     If trng.Offset(0, 2) <> 0 Then
@@ -364,6 +364,7 @@ Public Sub genLeadSheets()
     done = False
     Dim wb As Workbook
     Dim new_path() As String
+    Dim uTbl As ListObject
     Set wb = ThisWorkbook
     ThisWorkbook.Unprotect xPass
     Dim xlPath As String
@@ -383,7 +384,6 @@ Public Sub genLeadSheets()
             FSO.CreateFolder xlPath
         End If
     Loop
-    
     Dim e_cnt As Integer
     On Error GoTo 0
     Dim r_size As Integer
@@ -401,7 +401,23 @@ Public Sub genLeadSheets()
         lsPath = iTemp.getLName & "_Week_" & we & ".xlsx"
         lsPath = xlPath + lsPath
         hiddenApp.Workbooks.Open ThisWorkbook.path & "\Lead Card.xlsx"
+        hiddenApp.Workbooks.Open ThisWorkbook.path & "\UnitGoals.xlsx"
+        With hiddenApp.Workbooks("UnitGoals.xlsx")
+        For i = 1 To .Sheets.count
+            If .Worksheets(i).Visible = xlVeryHidden Then
+                .Worksheets(i).Visible = True
+            End If
+        Next
+        On Error Resume Next
+        Set uTbl = hiddenApp.Workbooks("UnitGoals.xlsx").Worksheets(iTemp.getLName).ListObjects(1)
+        If uTbl Is Nothing Then
+            Err.Clear
+            Set uTbl = hiddenApp.Workbooks("UnitGoals.xlsx").Worksheets("MASTER").ListObjects(1)
+        End If
+        On Error GoTo 0
         Set ls = hiddenApp.Workbooks("Lead Card.xlsx")
+        uTbl.DataBodyRange.Copy ls.Worksheets("DATA").ListObjects(1).Range(2, 1)
+        hiddenApp.Workbooks("UnitGoals.xlsx").Close False
         SetAttr ls.path, vbNormal
         hiddenApp.DisplayAlerts = False
         hiddenApp.EnableEvents = False
@@ -418,13 +434,13 @@ Public Sub genLeadSheets()
         End With
         ls.Worksheets("LEAD").Protect AllowInsertingRows:=True
         bks.Add ls
-        For x = 1 To UBound(weekRoster, 2)
+        For X = 1 To UBound(weekRoster, 2)
             Dim xTemp As Employee
-            Set xTemp = weekRoster(i, x)
+            Set xTemp = weekRoster(i, X)
             If xTemp Is Nothing Then
             Else
                 e_cnt = e_cnt + 1
-                With ls.Worksheets("LEAD").Range("Monday").Cells(x + 1, 1)
+                With ls.Worksheets("LEAD").Range("Monday").Cells(X + 1, 1)
                     ls.Worksheets("LEAD").Unprotect
                     .Value = xTemp.getClass
                     .Offset(0, 1).Value = xTemp.getFName & " " & xTemp.getLName
@@ -432,7 +448,7 @@ Public Sub genLeadSheets()
                     ls.Worksheets("LEAD").Protect AllowInsertingRows:=True
                 End With
             End If
-        Next x
+        Next X
         ls.Worksheets("LEAD").Unprotect
         For n = 1 To 7
             For p = e_cnt + 1 To 15
@@ -539,7 +555,6 @@ Private Sub check_updates(Optional uTime As Date)
         t1 = Now
         emp_table.update_emp_table
         t2 = Now
-        Debug.Print DateDiff("s", t1, t2)
     End If
     If DateDiff("s", uTime, FileDateTime(datPath & "\Labor Report.xlsx")) > 0 Then
         Dim lc_wb As Workbook
@@ -585,13 +600,13 @@ Public Function publicEncryptPassword(pw As String) As String
         End If
     End If
     Dim pwi As Long
-    Dim test As String
+    Dim tEst As String
     Dim epw As String
     Dim key As Long
     epw = vbnullStrig
     For i = 0 To Len(pw) - 1
-        test = Left(pw, 1)
-        pwi = Asc(test)
+        tEst = Left(pw, 1)
+        pwi = Asc(tEst)
         pw = Right(pw, Len(pw) - 1)
         key = ThisWorkbook.Worksheets("KEY").Range("A" & i + 1).Value
         If key = pwi Then key = key + 128
@@ -606,13 +621,13 @@ End Function
 
 Private Function encryptPassword(pw As String) As String
     Dim pwi As Long
-    Dim test As String
+    Dim tEst As String
     Dim epw As String
     Dim key As Long
     epw = vbnullStrig
     For i = 0 To Len(pw) - 1
-        test = Left(pw, 1)
-        pwi = Asc(test)
+        tEst = Left(pw, 1)
+        pwi = Asc(tEst)
         pw = Right(pw, Len(pw) - 1)
         key = ThisWorkbook.Worksheets("KEY").Range("A" & i + 1).Value
         If key = pwi Then key = key + 128
@@ -718,9 +733,9 @@ End Function
 Public Function saveWeekRoster(ByRef ws As Worksheet) As Integer
     ws.name = "SAVE"
     ws.Visible = True
-    Dim cnt As Integer, x As Integer
+    Dim cnt As Integer, X As Integer
     cnt = 0
-    x = 0
+    X = 0
     Dim done As Boolean
     Dim tEmp As Employee
     Set tEmp = New Employee
@@ -728,21 +743,21 @@ Public Function saveWeekRoster(ByRef ws As Worksheet) As Integer
         For i = 0 To UBound(weekRoster)
             done = False
             Do While done = False
-                If weekRoster(i, x) Is Nothing Then
+                If weekRoster(i, X) Is Nothing Then
                     done = True
                 Else
                     .Offset(cnt, 0).Value = i
-                    .Offset(cnt, 1).Value = x
-                    .Offset(cnt, 2).Value = weekRoster(i, x).getClass
-                    .Offset(cnt, 3).Value = weekRoster(i, x).getLName
-                    .Offset(cnt, 4).Value = weekRoster(i, x).getFName
-                    .Offset(cnt, 5).Value = weekRoster(i, x).getNum
-                    .Offset(cnt, 6).Value = weekRoster(i, x).getPerDiem
+                    .Offset(cnt, 1).Value = X
+                    .Offset(cnt, 2).Value = weekRoster(i, X).getClass
+                    .Offset(cnt, 3).Value = weekRoster(i, X).getLName
+                    .Offset(cnt, 4).Value = weekRoster(i, X).getFName
+                    .Offset(cnt, 5).Value = weekRoster(i, X).getNum
+                    .Offset(cnt, 6).Value = weekRoster(i, X).getPerDiem
                     cnt = cnt + 1
                 End If
-                x = x + 1
+                X = X + 1
             Loop
-            x = 0
+            X = 0
         Next i
     End With
 
@@ -957,14 +972,14 @@ End Sub
 Public Sub printRoster()
     Dim tEmp As Employee
     For i = 0 To UBound(weekRoster)
-        For x = 0 To UBound(weekRoster, 2)
-            If weekRoster(i, x) Is Nothing Then
+        For X = 0 To UBound(weekRoster, 2)
+            If weekRoster(i, X) Is Nothing Then
             Else
-                Set tEmp = weekRoster(i, x)
-                MsgBox ("LD: " & i & vbNewLine & "EMP: " & x & _
+                Set tEmp = weekRoster(i, X)
+                MsgBox ("LD: " & i & vbNewLine & "EMP: " & X & _
                 vbNewLine & tEmp.getFName & " " & tEmp.getLName)
             End If
-        Next x
+        Next X
     Next i
             
 End Sub
@@ -976,7 +991,7 @@ Public Function isSave() As Integer
     Dim we As String
     Dim tmp() As String
     we = Format(week, "mm.dd.yy")
-    xlFile = jobPath & "\" & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+    xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
     If testFileExist(xlFile) > 0 Then
         isSave = 1
     Else
@@ -1004,60 +1019,58 @@ Public Sub resizeRoster(l As Integer, e As Integer)
     ReDim newRoster(l, e)
     Dim tEmp As Employee
     For i = 0 To l
-        For x = 0 To e
+        For X = 0 To e
             On Error Resume Next
-            Set tEmp = weekRoster(i, x)
+            Set tEmp = weekRoster(i, X)
 '            If temp Is Nothing Then
 '            Else
-                Set newRoster(i, x) = tEmp
+                Set newRoster(i, X) = tEmp
 '            End If
-        Next x
+        Next X
     Next i
     On Error GoTo 0
     ReDim weekRoster(l, e)
     For i = 0 To l
-        For x = 0 To e
-            Set weekRoster(i, x) = newRoster(i, x)
-            
+        For X = 0 To e
+            Set weekRoster(i, X) = newRoster(i, X)
             On Error Resume Next
-            Debug.Print newRoster(i, x).getFullname
-        Next x
+        Next X
     Next i
     On Error GoTo 0
     
 End Sub
 
 Public Sub insertRoster(index As Integer)
-    Dim x As Integer
+    Dim X As Integer
     Dim tmp As Employee
     Dim tmpRoster() As Employee
     ReDim tmpRoster(UBound(weekRoster), eCount)
-    For x = 0 To index - 1
+    For X = 0 To index - 1
         For i = 0 To eCount
-            Set tmp = weekRoster(x, i)
+            Set tmp = weekRoster(X, i)
             If tmp Is Nothing Then
             Else
-                Set tmpRoster(x, i) = tmp
+                Set tmpRoster(X, i) = tmp
             End If
         Next i
-    Next x
-    For x = index + 1 To UBound(weekRoster)
+    Next X
+    For X = index + 1 To UBound(weekRoster)
         For i = 0 To eCount
-            Set tmp = weekRoster(x - 1, i)
+            Set tmp = weekRoster(X - 1, i)
             If tmp Is Nothing Then
             Else
-                Set tmpRoster(x, i) = tmp
+                Set tmpRoster(X, i) = tmp
             End If
         Next i
-    Next x
-    For x = 0 To UBound(weekRoster)
+    Next X
+    For X = 0 To UBound(weekRoster)
         For i = 0 To eCount
-            Set weekRoster(x, i) = tmpRoster(x, i)
+            Set weekRoster(X, i) = tmpRoster(X, i)
         Next i
-    Next x
+    Next X
 End Sub
 
-Public Sub genTimeCard(Optional test As Boolean)
+Public Sub genTimeCard(Optional tEst As Boolean)
     Dim hiddenApp As New Excel.Application
     hiddenApp.DisplayAlerts = False
     Dim xlPath As String
@@ -1065,7 +1078,7 @@ Public Sub genTimeCard(Optional test As Boolean)
     Dim we As String
     Dim shtCnt As Integer
     shtCnt = 0
-    If test Then
+    If tEst Then
         jobNum = "461705"
         week = calcWeek(43127)
 '        we = "01.28.18"
@@ -1076,8 +1089,8 @@ Public Sub genTimeCard(Optional test As Boolean)
     xlPath = jobPath & jobNum & "\Week_" & we & "\TimePackets\"
     xlFile = jobNum & "_Week_" & we & "_TimeCards.xlsx"
     If loadRoster = -1 Then GoTo load_err
-    If test Then
-        If timeCard.loadShifts(test) = -1 Then
+    If tEst Then
+        If timeCard.loadShifts(tEst) = -1 Then
             Stop
         End If
     Else
@@ -1104,7 +1117,7 @@ Public Sub genTimeCard(Optional test As Boolean)
                 .Range("e_num") = tEmp.getNum
                 .Range("we_date") = calcWeek(Date)
                 .Range("job_desc") = jobNum & " - " & jobName
-                Dim tshft As shift
+                Dim tshft As Shift
                 For Each tshft In tEmp.getShifts
                     Dim i As Integer
                     i = 0
@@ -1188,7 +1201,7 @@ Public Sub test_updatePacket()
     timeCard.updatePacket True
 End Sub
 
-Public Sub updatePacket(Optional test As Boolean)
+Public Sub updatePacket(Optional tEst As Boolean)
     Dim we As String
     Dim xlPath As String
     Dim xlFile As String
@@ -1196,17 +1209,17 @@ Public Sub updatePacket(Optional test As Boolean)
     Dim wb As Workbook
     Dim tc_wb As Workbook
     Dim tEmp As Variant
-    If test Then
+    If tEst Then
         jobNum = "461705"
         week = calcWeek(43127)
 '        we = "01.28.18"
         jobPath = ThisWorkbook.path & "\"
         On Error GoTo 0
         loadRoster
-        loadShifts test
+        loadShifts tEst
     End If
     we = Format(week, "mm.dd.yy")
-    xlPath = jobPath & "\" & jobNum & "\Week_" & we & "\TimePackets\"
+    xlPath = jobPath & jobNum & "\Week_" & we & "\TimePackets\"
     xlFile = jobNum & "_Week_" & we & ".xlsx"
     xlTCFile = jobNum & "_Week_" & we & "_TimeCards.xlsx"
     
@@ -1335,7 +1348,7 @@ Public Function loadRoster() As Integer
     ReDim weekRoster(0, eCount)
     Dim hiddenApp As New Excel.Application
     i = 0
-    xlFile = jobPath & "\" & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+    xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
 '    On Error GoTo 10
     hiddenApp.Workbooks.Open xlFile
     SetAttr xlFile, vbNormal
@@ -1353,7 +1366,7 @@ Public Function loadRoster() As Integer
         xlEmp.emClass = tmp.Offset(0, 2)
         xlEmp.elName = tmp.Offset(0, 3)
         xlEmp.efName = tmp.Offset(0, 4)
-        xlEmp.emnum = tmp.Offset(0, 5)
+        xlEmp.emNum = tmp.Offset(0, 5)
         xlEmp.emPerDiem = tmp.Offset(0, 6)
        Set weekRoster(tmp.Offset(0, 0).Value, tmp.Offset(0, 1).Value) = xlEmp
     Next tmp
@@ -1391,7 +1404,7 @@ Private Sub loadMenu() 'ws As Worksheet)
         Set tmp = New Employee
         tmp.efName = rng.Offset(0, 4).Value
         tmp.elName = rng.Offset(0, 3).Value
-        tmp.emnum = rng.Offset(0, 5).Value
+        tmp.emNum = rng.Offset(0, 5).Value
         tmp.emClass = rng.Offset(0, 2).Value
         tmp.emPerDiem = rng.Offset(0, 6).Value
         Set weekRoster(rng.Offset(0, 0).Value, rng.Offset(0, 1).Value) = tmp

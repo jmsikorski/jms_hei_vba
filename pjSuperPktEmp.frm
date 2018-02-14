@@ -1,7 +1,7 @@
 VERSION 5.00
 Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} pjSuperPktEmp 
    Caption         =   "Add Employees"
-   ClientHeight    =   7860
+   ClientHeight    =   9105.001
    ClientLeft      =   120
    ClientTop       =   465
    ClientWidth     =   5625
@@ -13,26 +13,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 Private Sub nLead_Click()
@@ -71,7 +51,7 @@ End Sub
 
 Private Sub spAdd_Click()
     Dim ws As Worksheet
-    Set ws = ThisWorkbook.Worksheets("ROSTER")
+    Set ws = Worksheets("ROSTER")
     Dim lBox As Integer
     Dim tlist As Object
     lBox = Me.Controls.count - 6
@@ -82,11 +62,11 @@ Private Sub spAdd_Click()
     For ld = 0 To UBound(menuList) - 1
         For i = 1 To lBox
             Set tlist = menuList(ld).Controls.Item("empList" & i)
-            For x = 0 To tlist.ListCount - 1
-                If tlist.Selected(x) Then
+            For X = 0 To tlist.ListCount - 1
+                If tlist.Selected(X) Then
                 cnt = cnt + 1
                 End If
-            Next x
+            Next X
         Next i
 '        If mSize < cnt Then mSize = cnt
 '        If mSize > 0 Then
@@ -94,17 +74,17 @@ Private Sub spAdd_Click()
         lIndex = 1
         For i = 1 To lBox
             Set tlist = menuList(ld).Controls.Item("empList" & i)
-            For x = 0 To tlist.ListCount - 1
-                If tlist.Selected(x) Then
-                    empRoster(i - 1, x).eLead = ld
-                    Set weekRoster(ld, lIndex) = empRoster(i - 1, x)
+            For X = 0 To tlist.ListCount - 1
+                If tlist.Selected(X) Then
+                    empRoster(i - 1, X).eLead = ld
+                    Set weekRoster(ld, lIndex) = empRoster(i - 1, X)
                     lIndex = lIndex + 1
                     If lIndex > eCount Then
                         MsgBox ("ERROR, Lead can only have " & eCount & " workers!")
                         Exit Sub
                     End If
                 End If
-            Next x
+            Next X
         Next i
     Next ld
 '    savePacket
@@ -119,33 +99,33 @@ End Sub
 Private Sub loadRoster(ld)
     Dim lBox As Integer
     Dim tlist As Object
-    lBox = Me.Controls.count - 6
+    lBox = Me.Controls.count - 8
     Dim tmp As Range
     Dim lIndex As Integer, mSize As Integer, cnt As Integer
     cnt = 0
     For i = 1 To lBox
         Set tlist = menuList(ld).Controls.Item("empList" & i)
-        For x = 0 To tlist.ListCount - 1
-            If tlist.Selected(x) Then
+        For X = 0 To tlist.ListCount - 1
+            If tlist.Selected(X) Then
             cnt = cnt + 1
             End If
-        Next x
+        Next X
     Next i
 '    resizeRoster UBound(menuList) - 1, eCount
     lIndex = 1
     For i = 1 To lBox
         Set tlist = menuList(ld).Controls.Item("empList" & i)
-        For x = 0 To tlist.ListCount - 1
-            If tlist.Selected(x) Then
-                empRoster(i - 1, x).eLead = ld
-                Set weekRoster(ld, lIndex) = empRoster(i - 1, x)
+        For X = 0 To tlist.ListCount - 1
+            If tlist.Selected(X) Then
+                empRoster(i - 1, X).eLead = ld
+                Set weekRoster(ld, lIndex) = empRoster(i - 1, X)
                 lIndex = lIndex + 1
                 If lIndex > eCount Then
                     MsgBox ("ERROR, Lead can only have " & eCount & " workers!")
                     Exit Sub
                 End If
             End If
-        Next x
+        Next X
     Next i
 End Sub
 
@@ -172,7 +152,7 @@ End Sub
 Public Sub setSheet(menuNum As Integer)
     Dim ws As Worksheet
     Dim tmp As Range
-    Set ws = ThisWorkbook.Worksheets("ROSTER")
+    Set ws = Worksheets("ROSTER")
     Dim cnt As Integer
     Dim lBoxHt As Integer
     lBoxHt = 0
@@ -189,9 +169,9 @@ Public Sub setSheet(menuNum As Integer)
     ReDim empRoster(numBox - 1, lBoxHt - 1)
     For i = 1 To numBox
         Dim eBox As Control
-        Set eBox = Me.Controls.Add("Forms.ListBox.1", "empList" & i)
+        Set eBox = Me.Controls("EmpFrame").Controls.Add("Forms.ListBox.1", "empList" & i)
         eBox.Visible = True
-        eBox.Top = 84
+        eBox.Top = 6
         If lBoxHt < 12 Then
             eBox.Height = 198
         Else
@@ -206,6 +186,8 @@ Public Sub setSheet(menuNum As Integer)
     Dim wide As Integer
     Dim eBoxIndex As Integer
     Dim eBoxCol As Integer
+    Dim bCnt As Integer
+    bCnt = 5
     eBoxCol = 1
     eBoxIndex = 0
     wide = 0
@@ -256,41 +238,137 @@ Public Sub setSheet(menuNum As Integer)
         Next te
     Next i
     wide = maxLen * 10
+    Dim bNames() As String
+    ReDim bNames(bCnt)
+    bNames = Split("spAdd,spDone,pLead,nLead,updateGoals", ",")
+    bCnt = bCnt + 1
+    Dim buff As Integer
+    Dim space As Double
+    Dim bWide As Double
+    Dim bRows As Integer
+    bWide = Me.spAdd.Width
+    With Me.Controls("EmpFrame")
+        If (wide * numBox) + 36 > Application.Width * 0.95 Then
+            .Width = Application.Width * 0.95
+            .ScrollBars = fmScrollBarsHorizontal
+            .ScrollWidth = wide * numBox + 24
+        Else
+            .Width = wide * numBox + 24
+        End If
+        Dim header As Integer
+        Dim Footer As Integer
+        bRows = Application.WorksheetFunction.RoundUp((bCnt * Me.spAdd.Width) / (Me.Controls("EmpFrame").Width + 36), 0)
+        head = 24 + Me.E1.Height + Me.Label2.Height
+        foot = bRows * Me.spAdd.Height + 78
+        If (.Controls("empList1").Height + head + foot) > Application.Height * 0.95 Then
+            .Height = Application.Height * 0.95
+            .Height = .Height - head - foot
+            If .ScrollBars = fmScrollBarsHorizontal Then
+                .ScrollBars = fmScrollBarsBoth
+            Else
+                .ScrollBars = fmScrollBarsVertical
+            End If
+            .ScrollHeight = .Controls("empList1").Height + 12
+        Else
+            .Height = .Controls("empList1").Height + 12
+        End If
+    End With
     With Me
-        .Height = .Controls("empList1").Height + .E1.Height + .Label2.Height + .spAdd.Height + 78
-        .Width = wide * numBox + 18
+        .Width = .Controls("EmpFrame").Width + 36
+        bRows = Application.WorksheetFunction.RoundUp((bCnt * .spAdd.Width) / Me.Width, 0)
+        bCnt = Application.WorksheetFunction.RoundUp((bCnt) / bRows, 0)
+        .Height = .Controls("EmpFrame").Height + head + foot
+        .Width = .Controls("EmpFrame").Width + 36
+        buff = (Me.Width - (bCnt * bWide)) / bCnt
+        space = (Me.Width - buff - ((bCnt - 1) * bWide))
+        space = (space / bCnt)
         .Label2.Caption = job & vbNewLine & "Week Ending: " & Format(week, "mm-dd-yy")
-        .Label2.Left = 6
-        .Label2.Width = wide * numBox
+        .Label2.Left = .Controls("EmpFrame").Left
+        .Label2.Width = .Controls("EmpFrame").Width
         .E1.Caption = "Lead " & lNum & "/" & UBound(menuList) & " "
         .E1.Caption = .E1.Caption & weekRoster(lNum - 1, 0).getFName & " " & weekRoster(lNum - 1, 0).getLName
-        .E1.Left = 6
-        .E1.Top = pjSuperPkt.L1.Top
-        .E1.Width = wide * numBox
-        .spAdd.Left = (.Width - 532) / 5
-        .spAdd.Top = .Controls("empList1").Top + .Controls("empList1").Height
-        .spDone.Left = (.Width - 532) / 5 * 2 + 130
-        .spDone.Top = .Controls("empList1").Top + .Controls("empList1").Height
-        .pLead.Left = (.Width - 532) / 5 * 3 + 260
-        .pLead.Top = .Controls("empList1").Top + .Controls("empList1").Height
-        .nLead.Left = (.Width - 532) / 5 * 4 + 390
-        .nLead.Top = .Controls("empList1").Top + .Controls("empList1").Height
+        .E1.Left = .Controls("EmpFrame").Left
+        .E1.Top = lMenu.L1.Top
+        .E1.Width = .Controls("EmpFrame").Width
+        i = 0
+        For r = 0 To bRows - 1
+            For c = 0 To UBound(bNames) / bRows
+            .Controls(bNames(i)).Left = buff + (c * (bWide + space)) + 24
+            Debug.Print .Controls(bNames(i)).Left
+            .Controls(bNames(i)).Top = .Controls("EmpFrame").Top + .Controls("EmpFrame").Height + (r * .spAdd.Height) + 12
+            i = i + 1
+            If i > UBound(bNames) Then Exit For
+            Next
+        Next
         .StartUpPosition = 0
         .Left = Application.Left + (0.5 * Application.Width) - (0.5 * .Width)
         .Top = Application.Top + (0.5 * Application.Height) - (0.5 * .Height)
         lNum = lNum + 1
     End With
     For i = 1 To numBox
-        With Me.Controls.Item("empList" & i)
+        With Me.Controls("EmpFrame").Controls.Item("empList" & i)
             .Left = 6 + (i - 1) * wide
             .Width = wide * (i + 1)
         End With
     Next i
     Exit Sub
 10
-    tEmp.emnum = -1
+    tEmp.emNum = -1
     Resume Next
-20
+End Sub
+
+
+Private Sub updateGoals_Click()
+    hiddenApp.Workbooks.Open ThisWorkbook.path & "\UnitGoals.xlsx"
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim i As Integer
+    hiddenApp.Visible = True
+    Set wb = hiddenApp.Workbooks("UnitGoals.xlsx")
+    For i = 1 To wb.Sheets.count
+        If wb.Worksheets(i).Visible = xlVeryHidden Then
+            wb.Worksheets(i).Visible = True
+        End If
+    Next
+    Dim tmp() As String
+    Dim leadName As String
+    Dim rng As Range
+    tmp() = Split(Me.E1.Caption, " ")
+    leadName = tmp(UBound(tmp))
+    On Error Resume Next
+    Set ws = wb.Worksheets(leadName)
+    If Err.Number <> 0 Then
+        Err.Clear
+        On Error GoTo 0
+        hiddenApp.Visible = True
+        wb.Worksheets("MASTER").Copy before:=wb.Worksheets(1)
+        Set ws = wb.Worksheets(1)
+        ws.name = leadName
+        With ws.ListObjects(1)
+            ws.Unprotect
+            .name = leadName & "_goals"
+            ws.Protect
+        End With
+    End If
+    For i = 1 To wb.Sheets.count
+        With wb.Worksheets(i)
+        If .name <> leadName Then
+            .Visible = xlVeryHidden
+        End If
+        End With
+    Next i
+    hiddenApp.Visible = True
+    hiddenApp.WindowState = xlMaximized
+    Do While done = False
+        On Error GoTo wb_closed
+        Set wb = hiddenApp.Workbooks("UnitGoals.xlsx")
+        done = False
+    Loop
+wb_closed:
+    Err.Clear
+    hiddenApp.Visible = False
+    Set wb = Nothing
+    Set ws = Nothing
 End Sub
 
 Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)

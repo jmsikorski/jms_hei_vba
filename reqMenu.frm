@@ -15,26 +15,6 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Private Sub mCancel_Click()
     mainMenu.mCancel_Click
 End Sub
@@ -127,21 +107,21 @@ End Sub
 
 Private Function encryptPassword(pw As String) As String
     Dim pwi() As Long
-    Dim test() As String
+    Dim tEst() As String
     Dim epw As String
     epw = vbnullStrig
-    ReDim test(Len(pw))
+    ReDim tEst(Len(pw))
     ReDim pwi(Len(pw))
-    Dim x As Integer
-    x = 1
+    Dim X As Integer
+    X = 1
     For i = 0 To Len(pw) - 1
-        test(i) = Left(pw, 1)
-        pwi(i) = Asc(test(i))
+        tEst(i) = Left(pw, 1)
+        pwi(i) = Asc(tEst(i))
         pw = Right(pw, Len(pw) - 1)
-        pwi(i) = pwi(i) Xor ThisWorkbook.Worksheets("KEY").Range("A" & x).Value
+        pwi(i) = pwi(i) Xor ThisWorkbook.Worksheets("KEY").Range("A" & X).Value
         'If pwi(i) = 0 Then pwi(i) = 1
         epw = epw & Chr(pwi(i))
-        x = x + 1
+        X = X + 1
     Next i
     encryptPassword = epw
 End Function

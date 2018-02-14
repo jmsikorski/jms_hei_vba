@@ -17,6 +17,7 @@ Public Sub showbook()
     ThisWorkbook.Worksheets("BUILD").Visible = True
 
 End Sub
+
 Public Sub main()
     For i = 1 To ThisWorkbook.Sheets.count - 1
         ThisWorkbook.Worksheets(i).Visible = xlVeryHidden
@@ -26,6 +27,11 @@ Public Sub main()
     Dim retryAns As Integer
     Dim reinstall As Boolean
     Dim testPath As String
+    Dim myPath As String
+    If Left(ThisWorkbook.Worksheets(1).Range("aPath"), 9) <> "C:\Users\" Then
+        myPath = Environ$("appdata")
+        ThisWorkbook.Worksheets(1).Range("aPath").Value = myPath & ThisWorkbook.Worksheets(1).Range("aPath").Value
+    End If
     testPath = Dir(ThisWorkbook.Worksheets(1).Range("aPath"), vbDirectory)
     If testPath = "" Then
         ThisWorkbook.Worksheets(1).Range("appinstalled") = False
@@ -34,8 +40,8 @@ Public Sub main()
     End If
     reinstall = False
     ans = 0
-    Set mMenu = New mainMenu
 retry_line:
+    Set mMenu = New mainMenu
     mMenu.Show
     If mMenu.ans = mAns.go Then
         main_run
@@ -43,15 +49,8 @@ retry_line:
         ans = main_install
         If ans = 1 Then
             MsgBox "Installed " & ThisWorkbook.Worksheets(dt).Range("aFile") & vbNewLine & "File is located in /Documents/Time Card Generator", vbOKOnly + vbInformation, "SUCCESS!"
-            Set mMenu = Nothing
-            If Application.Workbooks.count = 1 Then
-                Stop
-                Application.DisplayAlerts = False
-                ThisWorkbook.Saved = True
-                Application.Quit
-            Else
-                ThisWorkbook.Close False
-            End If
+            Unload mMenu
+            GoTo retry_line
         ElseIf ans = 2 Then
             If Environ$("username") = "jsikorski" Then
                 reinstall = True
@@ -140,9 +139,11 @@ Public Function main_uninstall(Optional reinstall As Boolean) As Integer
         FSO.DeleteFolder iPath & "Time Card Generator"
         On Error GoTo 0
     End If
-
-    ThisWorkbook.Worksheets(1).Range("reg_user") = vbNullString
-    ThisWorkbook.Worksheets(1).Range("reg_password") = vbNullString
+    Dim path() As String
+    path = Split(ws.Range("aPath"), "\")
+    ws.Range("apath") = "\" & path(UBound(path))
+    ws.Range("reg_user") = vbNullString
+    ws.Range("reg_password") = vbNullString
     If reinstall Then
         If main_install <> 1 Then
             MsgBox "Unable to install!", vbCritical + vbOKOnly, "ERROR"
@@ -317,7 +318,6 @@ Public Sub main_run()
     Set ws = ThisWorkbook.Worksheets(dt)
     ws.Unprotect pw
     i = 0
-    Stop
     Application.WindowState = xlMaximized
 '    If ws.Range("apprunning") = False Then
 '        ans = MsgBox("Quit?", vbQuestion + vbYesNoCancel, "Helix Time Card Gen")
@@ -344,7 +344,8 @@ Public Sub main_run()
     
     xlPath = ws.Range("aPath")
     If xlPath = vbNullString Then
-        xlPath = "C:\ProgramData\HelixTimeCard"
+        MsgBox "App not installed!", vbExclamation, "Oops!"
+        main_install
     End If
     xlFile = ws.Range("aFile")
     On Error Resume Next

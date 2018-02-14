@@ -14,42 +14,39 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Private Sub smBuild_Click()
     Dim we As String
     Dim xlFile As String
     Dim killFile As String
     Dim xStrPath As String
+    Dim lastWE As String
+    Dim ans As Integer
+    Dim FSO As FileSystemObject
+    Set FSO = New FileSystemObject
+    lastWE = Format(calcWeek(Date - 7), "mm.dd.yy")
     we = Format(week, "mm.dd.yy")
-    xlFile = jobPath & "\" & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+    xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+    lwXLFile = jobPath & jobNum & "\Week_" & lastWE & "\TimePackets\" & jobNum & "_Week_" & lastWE & ".xlsx"
+    
+try_again:
+    If FSO.FileExists(lwXLFile) Then
+        ans = MsgBox("Copy from last week?", vbYesNoCancel + vbQuestion, "COPY?")
+        If ans = vbYes Then
+            MkDir jobPath & jobNum & "\Week_" & we
+            MkDir jobPath & jobNum & "\Week_" & we & "\TimePackets"
+            FSO.CopyFile lwXLFile, xlFile
+            smEdit_Click
+            GoTo clean_up
+        ElseIf ans = vbCancel Then
+            GoTo clean_up
+        End If
+    End If
     If testFileExist(xlFile) > 0 Then
         On Error Resume Next
-        Dim ans As Integer
         ans = MsgBox("The packet already exists, Are you sure you want to overwrite it?", vbYesNo + vbQuestion)
         If ans = vbYes Then
-            xStrPath = jobPath & "\" & jobNum & "\Week_" & we & "\TimeSheets\"
             Kill xlFile
-            xStrPath = jobPath & "\" & jobNum & "\Week_" & we & "\TimeSheets\"
+            xStrPath = jobPath & jobNum & "\Week_" & we & "\TimeSheets\"
             killFile = Dir(xStrPath & "\*.xlsx")
             Do While killFile <> ""
                 Kill xStrPath & killFile
@@ -60,6 +57,8 @@ Private Sub smBuild_Click()
         End If
         On Error GoTo 0
     End If
+clean_up:
+    Set FSO = Nothing
     sMenu.Hide
     Set lMenu = New pjSuperPkt
     lMenu.Show
