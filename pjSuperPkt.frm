@@ -13,9 +13,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
-
-
 Private Sub spAdd_Click()
     If addlead.Visible = True Then
         Me.Hide
@@ -30,7 +27,7 @@ Private Sub spDone_Click()
     Dim tLead As Employee
     Dim tmpRoster() As Employee
     Dim ws As Worksheet
-    Set ws = Worksheets("ROSTER")
+    Set ws = ThisWorkbook.Worksheets("ROSTER")
     Set tLead = New Employee
     Dim lBox As Integer
     Dim tlist As Object
@@ -42,11 +39,11 @@ Private Sub spDone_Click()
     lIndex = 0
     For i = 1 To lBox
         Set tlist = Me.Controls.Item("empList" & i)
-        For X = 0 To tlist.ListCount - 1
-            If tlist.Selected(X) Then
+        For x = 0 To tlist.ListCount - 1
+            If tlist.Selected(x) Then
             lIndex = lIndex + 1
             End If
-        Next X
+        Next x
     Next i
     If lIndex = 0 Then
         MsgBox "You must Select a Lead!", vbExclamation + vbOKOnly
@@ -60,17 +57,17 @@ Private Sub spDone_Click()
     lIndex = 0
     For i = 1 To lBox
         Set tlist = Me.Controls.Item("empList" & i)
-        For X = 0 To tlist.ListCount - 1
-            If tlist.Selected(X) Then
-                leadRoster(i - 1, X).eLead = 0
+        For x = 0 To tlist.ListCount - 1
+            If tlist.Selected(x) Then
+                leadRoster(i - 1, x).eLead = 0
                 If UBound(menuList) = 0 And isSave <> 1 Then 'isSave < 0 Then
-                    Set weekRoster(lIndex, 0) = leadRoster(i - 1, X)
+                    Set weekRoster(lIndex, 0) = leadRoster(i - 1, x)
                 Else
-                    Set tmpRoster(lIndex, 0) = leadRoster(i - 1, X)
+                    Set tmpRoster(lIndex, 0) = leadRoster(i - 1, x)
                 End If
                 lIndex = lIndex + 1
             End If
-        Next X
+        Next x
     Next i
     lNum = 1
     Dim ldn As Integer
@@ -81,9 +78,9 @@ Private Sub spDone_Click()
         If UBound(weekRoster) < lIndex - 1 Then
             For i = 0 To UBound(tmpRoster)
                 If (tmpRoster(i, 0).getFullname = weekRoster(ldn, 0).getFullname) Then
-                    For X = 0 To eCount
-                        Set tmpRoster(i, X) = weekRoster(ldn, X)
-                    Next X
+                    For x = 0 To eCount
+                        Set tmpRoster(i, x) = weekRoster(ldn, x)
+                    Next x
                     If ldn = UBound(weekRoster) Then Exit For
                     ldn = ldn + 1
                 End If
@@ -91,9 +88,9 @@ Private Sub spDone_Click()
         Else
             For i = 0 To UBound(weekRoster)
                 If (tmpRoster(ldn, 0).getFullname = weekRoster(i, 0).getFullname) Then
-                    For X = 0 To eCount
-                        Set tmpRoster(ldn, X) = weekRoster(i, X)
-                    Next X
+                    For x = 0 To eCount
+                        Set tmpRoster(ldn, x) = weekRoster(i, x)
+                    Next x
                     If ldn = UBound(tmpRoster) Then Exit For
                     ldn = ldn + 1
                 End If
@@ -142,7 +139,7 @@ Private Sub UserForm_Initialize()
     Dim tLead As String
     Dim ws As Worksheet
     Dim tmp As Range
-    Set ws = Worksheets("ROSTER")
+    Set ws = ThisWorkbook.Worksheets("ROSTER")
     Dim cnt As Integer
     Dim lBoxHt As Integer
     lBoxHt = 0
@@ -231,7 +228,7 @@ Private Sub UserForm_Initialize()
             .Width = wide * numBox + 24
         End If
         If (.Controls("empList1").Height + 24 + Me.L1.Height + Me.Label2.Height + Me.spAdd.Height + 78) > Application.Height * 0.95 Then
-            .Height = Applicaiton.Height * 0.95
+            .Height = applicaiton.Height * 0.95
             .ScrollBars = fmScrollBarsVertical
         Else
             .Height = .Controls("empList1").Height + 24

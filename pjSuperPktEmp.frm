@@ -51,7 +51,7 @@ End Sub
 
 Private Sub spAdd_Click()
     Dim ws As Worksheet
-    Set ws = Worksheets("ROSTER")
+    Set ws = ThisWorkbook.Worksheets("ROSTER")
     Dim lBox As Integer
     Dim tlist As Object
     lBox = Me.Controls.count - 6
@@ -62,11 +62,11 @@ Private Sub spAdd_Click()
     For ld = 0 To UBound(menuList) - 1
         For i = 1 To lBox
             Set tlist = menuList(ld).Controls.Item("empList" & i)
-            For X = 0 To tlist.ListCount - 1
-                If tlist.Selected(X) Then
+            For x = 0 To tlist.ListCount - 1
+                If tlist.Selected(x) Then
                 cnt = cnt + 1
                 End If
-            Next X
+            Next x
         Next i
 '        If mSize < cnt Then mSize = cnt
 '        If mSize > 0 Then
@@ -74,17 +74,17 @@ Private Sub spAdd_Click()
         lIndex = 1
         For i = 1 To lBox
             Set tlist = menuList(ld).Controls.Item("empList" & i)
-            For X = 0 To tlist.ListCount - 1
-                If tlist.Selected(X) Then
-                    empRoster(i - 1, X).eLead = ld
-                    Set weekRoster(ld, lIndex) = empRoster(i - 1, X)
+            For x = 0 To tlist.ListCount - 1
+                If tlist.Selected(x) Then
+                    empRoster(i - 1, x).eLead = ld
+                    Set weekRoster(ld, lIndex) = empRoster(i - 1, x)
                     lIndex = lIndex + 1
                     If lIndex > eCount Then
                         MsgBox ("ERROR, Lead can only have " & eCount & " workers!")
                         Exit Sub
                     End If
                 End If
-            Next X
+            Next x
         Next i
     Next ld
 '    savePacket
@@ -105,33 +105,37 @@ Private Sub loadRoster(ld)
     cnt = 0
     For i = 1 To lBox
         Set tlist = menuList(ld).Controls.Item("empList" & i)
-        For X = 0 To tlist.ListCount - 1
-            If tlist.Selected(X) Then
+        For x = 0 To tlist.ListCount - 1
+            If tlist.Selected(x) Then
             cnt = cnt + 1
             End If
-        Next X
+        Next x
     Next i
 '    resizeRoster UBound(menuList) - 1, eCount
     lIndex = 1
     For i = 1 To lBox
         Set tlist = menuList(ld).Controls.Item("empList" & i)
-        For X = 0 To tlist.ListCount - 1
-            If tlist.Selected(X) Then
-                empRoster(i - 1, X).eLead = ld
-                Set weekRoster(ld, lIndex) = empRoster(i - 1, X)
+        For x = 0 To tlist.ListCount - 1
+            If tlist.Selected(x) Then
+                empRoster(i - 1, x).eLead = ld
+                Set weekRoster(ld, lIndex) = empRoster(i - 1, x)
                 lIndex = lIndex + 1
                 If lIndex > eCount Then
                     MsgBox ("ERROR, Lead can only have " & eCount & " workers!")
                     Exit Sub
                 End If
             End If
-        Next X
+        Next x
     Next i
 End Sub
 
 Private Sub spDone_Click()
     Application.DisplayAlerts = False
     Application.ScreenUpdating = False
+    Application.EnableEvents = False
+    Set lApp = New Excel.Application
+    lApp.Workbooks.Open ThisWorkbook.path & "\loadingtimer.xlsm"
+    lApp.Run "'loadingtimer.xlsm'!main"
     Unload sMenu
     Unload lMenu
     Dim ws As Worksheet
@@ -144,15 +148,19 @@ Private Sub spDone_Click()
     Next i
     savePacket
     genLeadSheets
+    lApp.Run "'loadingtimer.xlsm'!stopLoading"
+    lApp.Quit
+    Set lApp = Nothing
     mMenu.Show
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
+    Application.EnableEvents = True
 End Sub
 
 Public Sub setSheet(menuNum As Integer)
     Dim ws As Worksheet
     Dim tmp As Range
-    Set ws = Worksheets("ROSTER")
+    Set ws = ThisWorkbook.Worksheets("ROSTER")
     Dim cnt As Integer
     Dim lBoxHt As Integer
     lBoxHt = 0
@@ -319,12 +327,11 @@ End Sub
 
 
 Private Sub updateGoals_Click()
-    hiddenApp.Workbooks.Open ThisWorkbook.path & "\UnitGoals.xlsx"
+    Workbooks.Open ThisWorkbook.path & "\UnitGoals.xlsx"
     Dim wb As Workbook
     Dim ws As Worksheet
     Dim i As Integer
-    hiddenApp.Visible = True
-    Set wb = hiddenApp.Workbooks("UnitGoals.xlsx")
+    Set wb = Workbooks("UnitGoals.xlsx")
     For i = 1 To wb.Sheets.count
         If wb.Worksheets(i).Visible = xlVeryHidden Then
             wb.Worksheets(i).Visible = True
@@ -340,7 +347,6 @@ Private Sub updateGoals_Click()
     If Err.Number <> 0 Then
         Err.Clear
         On Error GoTo 0
-        hiddenApp.Visible = True
         wb.Worksheets("MASTER").Copy before:=wb.Worksheets(1)
         Set ws = wb.Worksheets(1)
         ws.name = leadName
@@ -357,16 +363,16 @@ Private Sub updateGoals_Click()
         End If
         End With
     Next i
-    hiddenApp.Visible = True
-    hiddenApp.WindowState = xlMaximized
+    Visible = True
+    WindowState = xlMaximized
     Do While done = False
         On Error GoTo wb_closed
-        Set wb = hiddenApp.Workbooks("UnitGoals.xlsx")
+        Set wb = Workbooks("UnitGoals.xlsx")
         done = False
     Loop
 wb_closed:
     Err.Clear
-    hiddenApp.Visible = False
+    Visible = False
     Set wb = Nothing
     Set ws = Nothing
 End Sub

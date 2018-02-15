@@ -51,41 +51,38 @@ Public Sub get_user_list()
     t1 = Now
     tEst = 8
     loadingMenu.Show
-    loadingMenu.updateProgress "User File", pct
-    Set hiddenApp = New Excel.Application
+    'loadingMenu.updateProgress "User File", pct
     pct = DateDiff("s", t1, Now()) / tEst
-    loadingMenu.updateProgress "User File", pct
-    hiddenApp.Workbooks.Open Getlnkpath(ThisWorkbook.path & "\Data.lnk") & "\User.xlsx", Password:="hei3078USER"
+    'loadingMenu.updateProgress "User File", pct
+    Workbooks.Open Getlnkpath(ThisWorkbook.path & "\Data.lnk") & "\User.xlsx", Password:="hei3078USER"
     pct = DateDiff("s", t1, Now()) / tEst
-    loadingMenu.updateProgress "User File", pct
-    Set ws = hiddenApp.Workbooks("User.xlsx").Worksheets("USER")
+    'loadingMenu.updateProgress "User File", pct
+    Set ws = Workbooks("User.xlsx").Worksheets("USER")
     pct = DateDiff("s", t1, Now()) / tEst
-    loadingMenu.updateProgress "User File", pct
+    'loadingMenu.updateProgress "User File", pct
     Set rng = ws.UsedRange
     pct = DateDiff("s", t1, Now()) / tEst
-    loadingMenu.updateProgress "User File", pct
+    'loadingMenu.updateProgress "User File", pct
     With wb.Worksheets("USER")
         .UsedRange.Offset(1, 0).Clear
         pct = DateDiff("s", t1, Now()) / tEst
-        loadingMenu.updateProgress "User File", pct
+        'loadingMenu.updateProgress "User File", pct
         .Range("A2", .Range("A2").Offset(rng.Rows.count - 1, rng.Columns.count - 1)) = rng.Offset(1, 0).Value
         pct = DateDiff("s", t1, Now()) / tEst
-        loadingMenu.updateProgress "User File", pct
+        'loadingMenu.updateProgress "User File", pct
         .Range("user_updated") = Now()
         pct = DateDiff("s", t1, Now()) / tEst
-        loadingMenu.updateProgress "User File", pct
+        'loadingMenu.updateProgress "User File", pct
     End With
     ws.Parent.Close False
     pct = DateDiff("s", t1, Now()) / tEst
-    loadingMenu.updateProgress "User File", pct
-    hiddenApp.Quit
-    Set hiddenApp = Nothing
+    'loadingMenu.updateProgress "User File", pct
     t2 = Now
     pct = DateDiff("s", t1, Now()) / tEst
-    loadingMenu.updateProgress "User File", pct
+    'loadingMenu.updateProgress "User File", pct
     Debug.Print DateDiff("s", t1, t2)
     pct = 1
-    loadingMenu.updateProgress "User File", pct
+    'loadingMenu.updateProgress "User File", pct
     Unload loadingMenu
 End Sub
 
@@ -118,10 +115,9 @@ Public Sub export_user_sheet()
     Dim ws As Worksheet
     Dim rng As Range
     Dim xFile As String
-    Set hiddenApp = New Excel.Application
-    hiddenApp.DisplayAlerts = False
-    hiddenApp.Workbooks.Open Getlnkpath(ThisWorkbook.path & "\Data.lnk") & "\User.xlsx", Password:="hei3078USER"
-    Set ws = hiddenApp.Workbooks("User.xlsx").Worksheets("USER")
+    DisplayAlerts = False
+    Workbooks.Open Getlnkpath(ThisWorkbook.path & "\Data.lnk") & "\User.xlsx", Password:="hei3078USER"
+    Set ws = Workbooks("User.xlsx").Worksheets("USER")
     Set rng = wb.Worksheets("USER").UsedRange
     With ws
         .UsedRange.Clear
@@ -132,6 +128,4 @@ Public Sub export_user_sheet()
     ws.Parent.SaveAs xFile
     SetAttr xFile, vbHidden
     ws.Parent.Close
-    hiddenApp.Quit
-    Set hiddenApp = Nothing
 End Sub
