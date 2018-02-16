@@ -13,11 +13,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
-
-
-
-
 Private Sub ComboBox1_Change()
     On Error GoTo 1
     job = ComboBox1.Value
@@ -25,11 +20,8 @@ Private Sub ComboBox1_Change()
     tEmp = Split(job, " - ")
     jobNum = tEmp(0)
     jobName = tEmp(1)
-    jobPath = ThisWorkbook.path & "\Data\"
-    spPath = "C:\Users\" & Environ$("username") & "\Helix Electric Inc\TeslaTimeCard - Documents\Time Card Files\Data\"
 1:
 End Sub
-
 Public Sub mCancel_Click()
     Me.Hide
     loginMenu.Show
@@ -40,6 +32,9 @@ Private Sub pjCoordinator_Click()
 End Sub
 
 Private Sub pjSuper_Click()
+    jobPath = ThisWorkbook.path & "\Data\"
+    sharePointPath = "C:\Users\" & Environ$("username") & "\Helix Electric Inc\TeslaTimeCard - Documents\Time Card Files\Data\"
+    getUpdatedFiles jobPath, sharePointPath, jobNum & "\Week_" & Format(calcWeek(Date), "mm.dd.yy")
     If TypeName(mMenu) <> "mainMenu" Then
         job = "ERROR"
     Else

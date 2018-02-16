@@ -198,7 +198,7 @@ Public Function clearFolder(xFolder As String) As Integer
     Set FSO = New FileSystemObject
 retry:
     On Error GoTo close_file
-    Dim xFile As file
+    Dim xFile As File
     If Not FSO.FolderExists(xFolder) Then
         Call FSO.CreateFolder(xFolder)
         clearFolder = 1
@@ -348,7 +348,7 @@ End Sub
 Public Sub ImportModules(Optional codeFolder As String)
     Dim wkbTarget As Excel.Workbook
     Dim objFSO As Scripting.FileSystemObject
-    Dim objFile As Scripting.file
+    Dim objFile As Scripting.File
     Dim szTargetWorkbook As String
     Dim szImportPath As String
     Dim szFileName As String
@@ -424,7 +424,7 @@ Public Sub ImportModules(Optional codeFolder As String)
         
         ElseIf (objFSO.GetExtensionName(objFile.name) = "frm") Then
             cmpComponents.Import objFile.path
-            ThisWorkbook.VBProject.VBComponents(objFile).CodeModule.DeleteLines StartLine:=16, count:=1
+            ThisWorkbook.VBProject.VBComponents(objFile).CodeModule.DeleteLines StartLine:=1, count:=1
         ElseIf (objFSO.GetExtensionName(objFile.name) = "bas") Then
             If objFile.name <> "main_module.bas" Then
                 cmpComponents.Import objFile.path

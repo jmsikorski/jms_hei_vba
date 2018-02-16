@@ -17,7 +17,10 @@ Public Sub showbook()
     ThisWorkbook.Worksheets("BUILD").Visible = True
 
 End Sub
+Sub showTimeCardGen()
+Application.Visible = True
 
+End Sub
 Public Sub main()
     For i = 1 To ThisWorkbook.Sheets.count - 1
         ThisWorkbook.Worksheets(i).Visible = xlVeryHidden
@@ -133,7 +136,11 @@ Public Function main_uninstall(Optional reinstall As Boolean) As Integer
         main_uninstall = -1
         GoTo clean_up
     End If
-    FSO.DeleteFolder ws.Range("aPath")
+    Dim fol As Folder
+    For Each fol In FSO.GetFolder(ws.Range("aPath")).SubFolders
+        FSO.DeleteFolder fol, True
+    Next
+    FSO.DeleteFolder ws.Range("apath"), True
     If FSO.FolderExists(iPath & "Time Card Generator") Then
         On Error GoTo uninstall_err
         FSO.DeleteFolder iPath & "Time Card Generator"

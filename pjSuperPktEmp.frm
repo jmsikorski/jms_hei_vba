@@ -13,8 +13,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
-
 Private Sub nLead_Click()
     Dim thisMenu As String
     For i = 1 To UBound(menuList)
@@ -24,7 +22,7 @@ Private Sub nLead_Click()
         End If
     Next i
     If i = UBound(menuList) Then
-        MsgBox ("No more leads")
+        MsgBox "No more leads", vbExclamation + vbOKOnly, "STOP!"
     Else
         loadRoster i - 1
         Me.Hide
@@ -41,7 +39,7 @@ Private Sub pLead_Click()
         End If
     Next i
     If i - 2 < 0 Then
-        MsgBox ("You are at the first lead")
+        MsgBox "You are at the first lead", vbExclamation + vbOKOnly, "STOP!"
     Else
         loadRoster i - 1
         Me.Hide
@@ -130,6 +128,9 @@ Private Sub loadRoster(ld)
 End Sub
 
 Private Sub spDone_Click()
+    Dim st As Date
+    Dim fn As Date
+    st = Now
     Application.DisplayAlerts = False
     Application.ScreenUpdating = False
     Application.EnableEvents = False
@@ -140,8 +141,6 @@ Private Sub spDone_Click()
     Unload lMenu
     Dim ws As Worksheet
     Set ws = ThisWorkbook.Worksheets("ROSTER")
-'    Stop
-'    loadRoster
     For i = 0 To UBound(menuList) - 1
         loadRoster i
         Unload menuList(i)
@@ -151,10 +150,14 @@ Private Sub spDone_Click()
     lApp.Run "'loadingtimer.xlsm'!stopLoading"
     lApp.Quit
     Set lApp = Nothing
-    mMenu.Show
+    fn = Now
+    Debug.Print st
+    Debug.Print fn
+    MsgBox "Time to complete: " & Format(fn - st, "h:mm:ss")
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
     Application.EnableEvents = True
+    mMenu.Show
 End Sub
 
 Public Sub setSheet(menuNum As Integer)
@@ -363,7 +366,6 @@ Private Sub updateGoals_Click()
         End If
         End With
     Next i
-    Visible = True
     WindowState = xlMaximized
     Do While done = False
         On Error GoTo wb_closed
@@ -372,7 +374,6 @@ Private Sub updateGoals_Click()
     Loop
 wb_closed:
     Err.Clear
-    Visible = False
     Set wb = Nothing
     Set ws = Nothing
 End Sub

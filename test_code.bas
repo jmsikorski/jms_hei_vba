@@ -17,6 +17,57 @@ Public Sub t13()
     loadingMenu.stopLoading
 End Sub
 
+Public Sub t14() ' test timeCard.makeWeekPath
+    Dim wb As Workbook
+    jobNum = "46XXXX"
+    jobName = "TEST"
+    Dim we As String
+    we = Format(calcWeek(Now), "mm.dd.yy")
+    jobPath = ThisWorkbook.path & "\Data\"
+    sharePointPath = "C:\Users\jsikorski\Helix Electric Inc\TeslaTimeCard - Documents\Time Card Files\Data\"
+    timeCard.makeWeekPath (we)
+        
+End Sub
+
+Public Sub t15() ' test timeCard.updatedFile
+    Dim result As Boolean
+    Dim fa As String
+    Dim fb As String
+    fa = "C:\Users\jsikorski\Helix Electric Inc\TeslaTimeCard - Documents\Time Card Files\Data\461625\Week_02.18.18\TimeSheets\Hood_Week_02.18.18.xlsx"
+    fb = "C:\Users\jsikorski\AppData\Roaming\HelixTimeCard\Data\461625\Week_02.18.18\TimeSheets\Hood_Week_02.18.18.xlsx"
+    result = timeCard.updatedFile(fa, fb)
+    If result Then
+        Debug.Print "updated"
+    Else
+        Debug.Print "not updated"
+    End If
+End Sub
+
+Public Sub t16()
+    Dim result As Boolean
+    Dim fa As String
+    Dim fb As String
+    Dim fol As String
+    jobPath = "C:\Users\jsikorski\AppData\Roaming\HelixTimeCard\Data\"
+    sharePointPath = "C:\Users\jsikorski\Helix Electric Inc\TeslaTimeCard - Documents\Time Card Files\Data\"
+    fol = "461625\Week_02.18.18"
+    fa = "C:\Users\jsikorski\Helix Electric Inc\TeslaTimeCard - Documents\Time Card Files\Data\461625\Week_02.18.18\TimeSheets\Cox_Week_02.18.18.xlsx"
+    fb = "C:\Users\jsikorski\AppData\Roaming\HelixTimeCard\Data\461625\Week_02.18.18\TimeSheets\Cox_Week_02.18.18.xlsx"
+    result = timeCard.updatedFile(fa, fb)
+    If result Then
+        Debug.Print "1: updated"
+    Else
+        Debug.Print "1: not updated"
+    End If
+    timeCard.getUpdatedFiles jobPath, sharePointPath, fol
+    result = timeCard.updatedFile(fa, fb)
+    If result Then
+        Debug.Print "2: updated"
+    Else
+        Debug.Print "2: not updated"
+    End If
+    
+End Sub
 Private Sub t8() 'Test of loadTestRoster function
     Dim l As Integer
     Dim e As Integer
@@ -75,7 +126,7 @@ load_err:
     On Error GoTo 0
 End Function
 
-Private Function print_roster() As Integer
+Public Function print_roster() As Integer
     On Error GoTo print_err
     Dim cnt As Integer
     Dim l As Integer
@@ -88,7 +139,7 @@ Private Function print_roster() As Integer
             If weekRoster(i, x) Is Nothing Then
                 Exit For
             Else
-                Debug.Print cnt & ": " & weekRoster(i, x).getFullname
+                Debug.Print cnt & ": Lead(" & i & ") " & weekRoster(i, x).getFullname
                 Debug.Print "Shift Count: " & weekRoster(i, x).getShifts.count
                 cnt = cnt + 1
             End If

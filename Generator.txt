@@ -4,3 +4,7 @@
 02/14/18: Worked for 02:01:44 On Fixed errors in Lead Card formulas
 02/14/18: Worked for 02:20:39 On Loading Timer
 02/14/18: Worked for 04:25:44 On LeadCardGen time optimization
+02/15/18: Worked for 09:07:26 On Versioning
+02/15/18: Worked for 00:01:18 On Versioning
+02/15/18: Worked for 04:31:26 On updating for submitting
+02/15/18: Worked for 03:11:37 On Updates to Submit function (updating)

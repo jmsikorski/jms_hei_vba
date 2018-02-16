@@ -13,11 +13,6 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
-
-
-
-
-
 Private Sub smBuild_Click()
     Dim we As String
     Dim xlFile As String
@@ -29,28 +24,22 @@ Private Sub smBuild_Click()
     Set FSO = New FileSystemObject
     lastWE = Format(calcWeek(Date - 7), "mm.dd.yy")
     we = Format(week, "mm.dd.yy")
-    xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
-    lwXLFile = jobPath & jobNum & "\Week_" & lastWE & "\TimePackets\" & jobNum & "_Week_" & lastWE & ".xlsx"
+    xlFile = jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+    lwXLFile = sharePointPath & jobNum & "\Week_" & lastWE & "\TimePackets\" & jobNum & "_Week_" & lastWE & ".xlsx"
     
-try_again:
-    If FSO.FileExists(lwXLFile) Then
-        ans = MsgBox("Copy from last week?", vbYesNoCancel + vbQuestion, "COPY?")
-        If ans = vbYes Then
-            MkDir jobPath & jobNum & "\Week_" & we
-            MkDir jobPath & jobNum & "\Week_" & we & "\TimePackets"
-            FSO.CopyFile lwXLFile, xlFile
-            smEdit_Click
-            GoTo clean_up
-        ElseIf ans = vbCancel Then
-            GoTo clean_up
-        End If
-    End If
-    If testFileExist(xlFile) > 0 Then
+    If testFileExist(sharePointPath & xlFile) > 0 Then
         On Error Resume Next
         ans = MsgBox("The packet already exists, Are you sure you want to overwrite it?", vbYesNo + vbQuestion)
         If ans = vbYes Then
-            Kill xlFile
+            Kill jobPath & xlFile
+            Kill sharePointPath & xlFile
             xStrPath = jobPath & jobNum & "\Week_" & we & "\TimeSheets\"
+            killFile = Dir(xStrPath & "\*.xlsx")
+            Do While killFile <> ""
+                Kill xStrPath & killFile
+                killFile = Dir
+            Loop
+            xStrPath = sharePointPath & jobNum & "\Week_" & we & "\TimeSheets\"
             killFile = Dir(xStrPath & "\*.xlsx")
             Do While killFile <> ""
                 Kill xStrPath & killFile
@@ -60,6 +49,20 @@ try_again:
             Exit Sub
         End If
         On Error GoTo 0
+    End If
+    If FSO.FileExists(lwXLFile) Then
+        ans = MsgBox("Copy from last week?", vbYesNoCancel + vbQuestion, "COPY?")
+        If ans = vbYes Then
+            On Error Resume Next
+            MkDir jobPath & jobNum & "\Week_" & we
+            MkDir jobPath & jobNum & "\Week_" & we & "\TimePackets"
+            FSO.CopyFile lwXLFile, jobPath & xlFile, True
+            FSO.CopyFile lwXLFile, sharePointPath & xlFile, True
+            On Error GoTo 0
+            smEdit_Click
+        ElseIf ans = vbCancel Then
+            GoTo clean_up
+        End If
     End If
 clean_up:
     Set FSO = Nothing
@@ -84,11 +87,27 @@ Public Sub smExit_Click()
 End Sub
 
 Private Sub smSubmit_Click()
-    timeCard.genTimeCard
-    
-    timeCard.updatePacket
-    MsgBox "Time Cards Complete"
+    Dim st As Date
+    Dim fn As Date
+    st = Now
+    Application.DisplayAlerts = False
+    Application.ScreenUpdating = False
+    Application.EnableEvents = False
+    Set lApp = New Excel.Application
     Unload Me
+    lApp.Workbooks.Open ThisWorkbook.path & "\loadingtimer.xlsm"
+    lApp.Run "'loadingtimer.xlsm'!main"
+    timeCard.genTimeCard
+    timeCard.updatePacket
+    lApp.Run "'loadingtimer.xlsm'!stopLoading"
+    lApp.Quit
+    Set lApp = Nothing
+    Application.Visible = True
+    fn = Now
+    MsgBox "Time to complete: " & Format(fn - st, "h:mm:ss")
+    Application.DisplayAlerts = True
+    Application.ScreenUpdating = True
+    Application.EnableEvents = True
     mMenu.Show
 End Sub
 
