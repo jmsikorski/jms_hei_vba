@@ -42,7 +42,7 @@ End Sub
 
 Public Sub t123()
     ThisWorkbook.Unprotect getXPass
-    Sheet5.Unprotect getXPass
+    Sheet5.Unprotect
 End Sub
 
 Public Function getSharePointLink(xlPath As String) As String
@@ -394,12 +394,12 @@ Public Sub makeWeekPath(w As String)
     Set FSO = New FileSystemObject
     
     tmp(0) = jobPath & jobNum & "\Week_" & w & "\TimePackets\"
-    tmp(1) = sharePointPath & jobNum & "\Week_" & w & "\TimePackets\"
-    tmp(2) = sharePointPath & jobNum & "\Week_" & w & "\TimeSheets\"
-    tmp(3) = jobPath & jobNum & "\Week_" & w & "\TimeSheets\"
+    tmp(1) = jobPath & jobNum & "\Week_" & w & "\TimeSheets\"
+    tmp(2) = sharePointPath & jobNum & "\Week_" & w & "\TimePackets\"
+    tmp(3) = sharePointPath & jobNum & "\Week_" & w & "\TimeSheets\"
     Dim i As Integer
     Dim x As Integer
-    For i = 0 To 3
+    For i = 0 To 1 'Change to 3 for Sharepoint
         On Error Resume Next
         new_path = Split(tmp(i), "\")
         x = 0
@@ -590,7 +590,7 @@ rt:
         ln = ln + 1
     Next ls
     Set xOutlookObj = Nothing
-    FSO.CopyFolder xlPath, spPath, True
+'    FSO.CopyFolder xlPath, spPath, True
     bk.Close False
     ThisWorkbook.Protect xPass
 
@@ -904,7 +904,7 @@ Public Sub savePacket()
         Kill xlFile
     End If
     bk.SaveAs xlFile
-    FSO.CopyFolder xlPath, spPath, True
+'    FSO.CopyFolder xlPath, spPath, True
     
     On Error GoTo 0
 End Sub
@@ -1301,7 +1301,13 @@ Public Sub updatePacket()
     Dim xlTCFile As String
     Dim wb As Workbook
     Dim tc_wb As Workbook
+    Dim i As Integer
     Dim tEmp As Variant
+    Dim pCode As String
+    Dim pDesc As String
+    Dim cnt As Integer
+    Dim rng As Range
+    Dim s As Variant
     we = Format(week, "mm.dd.yy")
     xlPath = jobPath & jobNum & "\Week_" & we & "\TimePackets\"
     xlFile = jobNum & "_Week_" & we & ".xlsx"
@@ -1312,12 +1318,8 @@ Public Sub updatePacket()
     Application.Visible = False
     Set wb = Workbooks(xlFile)
     Set tc_wb = Workbooks(xlTCFile)
-    Dim cnt As Integer
     cnt = 0
-    Dim rng As Range
-    Dim s As Variant
     Set rng = wb.Worksheets("ROSTER").Range("emp_num")
-rt:
     lApp.Run "'loadingtimer.xlsm'!update", "Calculating Per Diem"
     For Each tEmp In weekRoster
         If tEmp Is Nothing Then
@@ -1337,6 +1339,48 @@ retry_emp:
             End If
         End If
     Next
+    lApp.Run "'loadingtimer.xlsm'!update", "Generating Reports"
+    ActiveSheet.Range("B4", "C46").Value = vbNullString
+    With wb.Worksheets("TOTAL HOURS FROM TC's")
+        Set rng = .Cells(.Range("tHead").Row, .Range("tHead").Column).Offset(1, 0)
+        For Each tEmp In weekRoster
+            If tEmp Is Nothing Then
+            Else
+                For Each s In tEmp.getShifts
+                    If s.getHrs > 0 Then
+                        pCode = s.getPhase
+                        If pCode = -1 Then
+                            pCode = holiday
+                            pDesc = "Holiday"
+                        Else
+                            pDesc = s.getPhaseDesc
+                        End If
+                    End If
+                    For i = 0 To .Range("PHASE_CODE").Rows.count
+                        Debug.Print pCode & " " & pDesc
+                        If rng.Offset(i, 0) = vbNullString Then
+                            rng.Offset(i, 0) = pCode
+                            rng.Offset(i, 1) = pDesc
+                            Exit For
+                        ElseIf rng.Offset(i, 0) = pCode Then
+                            Exit For
+                        End If
+                    Next
+                    If i = 45 Then
+                        rng.Offset(i, 0).EntireRow.Insert
+                        rng.Offset(i + 1, 0) = pCode
+                        rng.Offset(i + 1, 1) = pDesc
+                    End If
+                Next
+            End If
+        Next
+        If hideCells(1, .Range("tHead")) < 0 Then
+            Stop
+        End If
+        If hideCells(2, .Range("PHASE_CODE")) < 0 Then
+            Stop
+        End If
+    End With
     Dim wb_arr() As String
     Dim lead_arr As String
     Dim xlLeadPath As String
@@ -1345,7 +1389,7 @@ retry_emp:
     xlLeadPath = jobPath & jobNum & "\Week_" & we & "\TimeSheets\"
     lead_arr = getLeadSheets(xlLeadPath)
     wb_arr = Split(lead_arr, ",")
-    Dim i As Integer
+
 '    For i = 0 To UBound(wb_arr)
 '        xlLeadFile = xlLeadPath & wb_arr(i)
 '        Workbooks.Open xlLeadFile
@@ -1354,11 +1398,16 @@ retry_emp:
     Dim n As Integer
     Dim trng As Range
     Dim moveShts() As String
+    Set rng = wb.Worksheets("LABOR T&G TOTAL").Range("lead_table")
+    For i = 1 To UBound(weekRoster)
+        rng.EntireColumn.Insert xlShiftToRight, rng
+        rng.Copy rng.Offset(0, -6)
+    Next
     moveShts = Split("Labor Tracking & Goals,DAILY JOB REPORT,DAILY SIGN IN,TOOLBOX SIGN IN,LABOR RELEASE,EMPLOYEE EVALUATION", ",")
     Dim xSht As Integer
     Dim l As Integer
     For xSht = 0 To UBound(moveShts)
-        lApp.Run "'loadingtimer.xlsm'!update", "Importing " & StrConv((moveShts(xSht)), vbProperCase) & " to Packet"
+        lApp.Run "'loadingtimer.xlsm'!update", "Importing " & StrConv((moveShts(xSht)), vbProperCase)
         For l = 0 To UBound(wb_arr)
         n = 0
         Do While Left(wb_arr(n), Len(wb_arr(n)) - 19) <> weekRoster(l, 0).getLName
@@ -1402,12 +1451,17 @@ show_hiddenApp:
         wb.Worksheets("ROSTER").Range("WEEKLY_OT_HOURS") = wb.Worksheets("ROSTER").Range("WEEKLY_OT_HOURS") + tc_wb.Worksheets(1).Range("TOTAL_OTHRS")
         tc_wb.Worksheets(1).Move after:=wb.Worksheets(wb.Sheets.count)
     Next xSht
-    
+    With wb.Worksheets("LABOR T&G TOTAL")
+        Set rng = .Range(.Range("COST_CODE"), .Range("COST_CODE").End(xlDown))
+        If hideCells(2, rng) < 0 Then
+            Stop
+        End If
+    End With
     wb.Worksheets("ROSTER").Activate
     Application.Visible = False
     wb.Save
     wb.Close False
-    timeCard.getUpdatedFiles sharePointPath, jobPath, jobNum
+    'timeCard.getUpdatedFiles sharePointPath, jobPath, jobNum ' Transfer updated files to sharepoint
     
 End Sub
 
@@ -1598,9 +1652,32 @@ Public Function get_job_value(Optional c As Range) As Integer
     Next i
     get_job_value = tmp
 End Function
-Public Sub testPacket()
-Attribute testPacket.VB_ProcData.VB_Invoke_Func = "r\n14"
-    loadMenu
-    savePacket
-    MsgBox ("Complete")
-End Sub
+
+Public Function hideCells(t As Integer, fullRange As Range) As Integer
+'Fuction looks for a Range with .Value = vbNullString and hides their enitre row or column
+'t is for Row or Column selection
+'fullRange is the range to check for vaules
+    Dim rng As Range
+    Dim cnt As Integer
+    cnt = 0
+    Select Case t '1 for columns, 2 for rows
+        Case 1:
+            For Each rng In fullRange
+                If rng = vbNullString Then
+                    rng.EntireColumn.Hidden = True
+                    cnt = cnt + 1
+                End If
+            Next
+        Case 2:
+            For Each rng In fullRange
+                If rng = vbNullString Then
+                    rng.EntireRow.Hidden = True
+                    cnt = cnt + 1
+                End If
+            Next
+        Case Default:
+            cnt = 0
+        End Select
+        hideCells = cnt
+End Function
+
