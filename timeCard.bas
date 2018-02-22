@@ -24,6 +24,7 @@ Public Const eCount = 15
 Public xPass As String
 Public lApp As Excel.Application
 Public xOutlookObj As Object
+Public publish As Integer
 
 Public Const holiday = "88080-08"
 Public Enum mType
@@ -34,10 +35,14 @@ Public Enum mType
 End Enum
 
 Public Sub a()
+    On Error Resume Next
     Application.EnableEvents = True
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
     Application.Visible = True
+    lApp.Quit
+    Set lApp = Nothing
+    On Error GoTo 0
 End Sub
 
 Public Sub t123()
@@ -155,7 +160,6 @@ auth_retry:
         Next i
 '        check_updates ThisWorkbook.Worksheets("HOME").Range("file_updated")
         ThisWorkbook.Worksheets("HOME").Range("file_updated") = Now
-        week = calcWeek(Date)
         Dim lst As Range
         Set lst = ThisWorkbook.Worksheets("Jobs").UsedRange
         lst.name = "jobList"
@@ -180,16 +184,22 @@ quit_sub:
     'ThisWorkbook.Close False
 End Sub
 
-Sub BreakLinks()
-'Updateby20140318
-Dim wb As Workbook
-Dim link As Variant
-Set wb = Application.ActiveWorkbook
-If Not IsEmpty(wb.LinkSources(xlExcelLinks)) Then
-    For Each link In wb.LinkSources(xlExcelLinks)
-        wb.BreakLink link, xlLinkTypeExcelLinks
-    Next link
-End If
+
+
+Public Sub BreakLinks()
+    'Updateby20140318
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim link As Variant
+    Set wb = Application.ActiveWorkbook
+    For Each ws In wb.Sheets
+        ws.Unprotect
+    Next
+    If Not IsEmpty(wb.LinkSources(xlExcelLinks)) Then
+        For Each link In wb.LinkSources(xlExcelLinks)
+            wb.BreakLink link, xlLinkTypeExcelLinks
+        Next link
+    End If
 End Sub
 
 Public Sub addMenu(mType As Integer)
@@ -225,9 +235,8 @@ End Sub
 Public Sub copy_tables(ByRef wb As Workbook)
     Dim ws As Worksheet
     Dim tbl As ListObject
-    Exit Sub
-    Set tbl = ws.ListObjects("Monday")
     Set ws = wb.Worksheets("LEAD")
+    Set tbl = ws.ListObjects("Monday")
     ws.Unprotect
     Dim i As Integer
     For i = 2 To 7
@@ -311,8 +320,8 @@ rt:
     For i = 0 To UBound(wb_arr)
         xlFile = xlPath & wb_arr(i)
         Workbooks.Open xlFile
-        Application.Visible = False
     Next
+    Application.Visible = False
     Dim n As Integer
     Dim rng As Range
     Dim trng As Range
@@ -455,7 +464,6 @@ Public Sub genLeadSheets()
         Dim ls As Workbook
         lsPath = iTemp.getLName & "_Week_" & we & ".xlsx"
         lsPath = xlPath & "\" & lsPath
-rt:
         e_cnt = 1
         Workbooks.Open ThisWorkbook.path & "\Lead Card.xlsx"
         Workbooks.Open ThisWorkbook.path & "\UnitGoals.xlsx"
@@ -489,12 +497,12 @@ rt:
         ls.Worksheets("Labor Tracking & Goals").Unprotect
         ls.Worksheets("Labor Tracking & Goals").Range("lead_name") = iTemp.getFullname
         ls.Worksheets("Labor Tracking & Goals").Protect
-'        With ls.Worksheets("LEAD").Range("Monday").Cells(1, 1)
-'            ls.Worksheets("LEAD").Unprotect
-'            .Value = iTemp.getClass
-'            .Offset(0, 1).Value = iTemp.getFName & " " & iTemp.getLName
-'            .Offset(0, 2).Value = iTemp.getNum
-'        End With
+        With ls.Worksheets("LEAD").Range("Monday").Cells(1, 1)
+            ls.Worksheets("LEAD").Unprotect
+            .Value = iTemp.getClass
+            .Offset(0, 1).Value = iTemp.getFName & " " & iTemp.getLName
+            .Offset(0, 2).Value = iTemp.getNum
+        End With
         ls.Worksheets("LEAD").Protect AllowInsertingRows:=True
         bks.Add ls
         Dim x As Integer
@@ -504,13 +512,13 @@ rt:
             If xTemp Is Nothing Then
             Else
                 e_cnt = e_cnt + 1
-'                With ls.Worksheets("LEAD").Range("Monday").Cells(x + 1, 1)
-'                    ls.Worksheets("LEAD").Unprotect
-'                    .Value = xTemp.getClass
-'                    .Offset(0, 1).Value = xTemp.getFName & " " & xTemp.getLName
-'                    .Offset(0, 2).Value = xTemp.getNum
-'                    ls.Worksheets("LEAD").Protect AllowInsertingRows:=True
-'                End With
+                With ls.Worksheets("LEAD").Range("Monday").Cells(x + 1, 1)
+                    ls.Worksheets("LEAD").Unprotect
+                    .Value = xTemp.getClass
+                    .Offset(0, 1).Value = xTemp.getFName & " " & xTemp.getLName
+                    .Offset(0, 2).Value = xTemp.getNum
+                    ls.Worksheets("LEAD").Protect AllowInsertingRows:=True
+                End With
             End If
         Next x
         With ls.Worksheets("LEAD")
@@ -544,25 +552,33 @@ rt:
                 Set rng = .Range(.ListObjects(day).HeaderRowRange, .ListObjects(day).HeaderRowRange.Offset(e_cnt + 1, 0))
                 .ListObjects(day).Resize rng
                 If tr < 7 Then
-                    rng.End(xlDown).Offset(1, 0).EntireRow.Clear
-                    .Range(rng.End(xlDown).Offset(2, 0), .ListObjects(nday).HeaderRowRange.Offset(-2, 0)).EntireRow.Delete
+                    rng.End(xlDown).Offset(2, 0).EntireRow.Clear
+                    With .Range(rng.End(xlDown).Offset(2, 0), rng.End(xlDown).Offset(2, 8)).Borders(xlEdgeTop)
+                        .LineStyle = xlContinuous
+                        .Weight = xlMedium
+                        .ColorIndex = xlAutomatic
+                    End With
+                    .Range(rng.End(xlDown).Offset(3, 0), .ListObjects(nday).HeaderRowRange.Offset(-2, 0)).EntireRow.Delete
                 Else
-                    rng.End(xlDown).Offset(1, 0).EntireRow.Clear
-                    Set rng = rng.End(xlDown).Offset(2, 0)
+                    rng.End(xlDown).Offset(2, 0).EntireRow.Clear
+                    With .Range(rng.End(xlDown).Offset(2, 0), rng.End(xlDown).Offset(2, 8)).Borders(xlEdgeTop)
+                        .LineStyle = xlContinuous
+                        .Weight = xlMedium
+                        .ColorIndex = xlAutomatic
+                    End With
+                    Set rng = rng.End(xlDown).Offset(3, 0)
                     .Range(rng, rng.Offset(300, 0)).EntireRow.Delete
+                    Exit For
                 End If
+                .ListObjects(nday).DataBodyRange = .ListObjects("Monday").DataBodyRange.Formula
             Next tr
         End With
-'        For n = 1 To 7
-'            For p = e_cnt + 1 To 15
-'                ls.Worksheets("LEAD").ListObjects(n).ListRows(e_cnt + 1).Delete
-'            Next p
-'        Next n
-        copy_tables ls
+        
         If genRoster(bk, ls.Worksheets("ROSTER"), i + 1) = -1 Then
             MsgBox ("ERROR PRINTING ROSTER")
         End If
-        setDataValidation ls.Worksheets(Sheet5.name)
+        
+        setDataValidation ls.Worksheets("LEAD")
         ls.Worksheets("LEAD").Protect AllowInsertingRows:=True
         bk.Worksheets("SAVE").Visible = xlVeryHidden
         ls.Worksheets("ROSTER").Visible = xlVeryHidden
@@ -581,16 +597,31 @@ rt:
     Dim ln As Integer
     ln = 0
     Set xOutlookObj = CreateObject("Outlook.Application")
+    Dim ans As Integer
+    Dim previewMail As Integer
+    ans = MsgBox("Email Lead Packets?", vbYesNo + vbQuestion, "EMAIL?")
+    If ans = vbYes Then
+        previewMail = MsgBox("Preview Email before sending?", vbYesNo + vbQuestion, "PREVIEW?")
+    End If
     For Each ls In bks
         ls.Worksheets("LEAD").Activate
-        ls.Worksheets("LEAD").ListObjects("Monday").Range(2, 4).Activate
+        On Error Resume Next
+        ls.Worksheets("LEAD").ListObjects("Monday").Range(2, 4).Select
+        If Err.Number <> 0 Then
+            Debug.Print Err.Description
+            Err.Clear
+        End If
         ls.Save
         ls.Close
-        send_leadSheet ebks(ln, 0), ebks(ln, 1)
+        If ans = vbYes Then
+            send_leadSheet ebks(ln, 0), ebks(ln, 1), previewMail
+        End If
         ln = ln + 1
     Next ls
     Set xOutlookObj = Nothing
-'    FSO.CopyFolder xlPath, spPath, True
+    If publish = vbYes Then
+        FSO.CopyFolder xlPath, spPath, True
+    End If
     bk.Close False
     ThisWorkbook.Protect xPass
 
@@ -602,14 +633,69 @@ Public Sub setDataValidation(ws As Worksheet)
     Dim vData As String
     On Error Resume Next
     For i = 1 To 7
+        Set rng = ws.ListObjects(i).Range(1, 6)
+        rng.Validation.Delete
+        vData = "=DATA!" & ws.Parent.Worksheets("DATA").Cells(rng.Row, 20).Address
+        rng.Validation.Add xlValidateList, AlertStyle:=xlValidAlertStop, _
+        Operator:=xlEqual, Formula1:=vData
+        With rng.Validation
+            .ErrorMessage = "The Formula in this cell cannot be changed!" & vbNewLine & _
+            "Correct Formula is: =IFERROR(INDIRECT(CONCATENATE(""DATA!T"",ROW())),"""")"
+            .IgnoreBlank = False
+            .InCellDropdown = False
+        End With
         For Each rng In ws.ListObjects(i).ListColumns(6).DataBodyRange
             rng.Validation.Delete
-            vData = "=DATA!" & Sheet4.Cells(rng.Row, 20).Address
+            vData = "=DATA!" & ws.Parent.Worksheets("DATA").Cells(rng.Row, 20).Address
             rng.Validation.Add xlValidateList, AlertStyle:=xlValidAlertStop, _
             Operator:=xlEqual, Formula1:=vData
             With rng.Validation
-                .Errorwsssage = "The Formula in this cell cannot be changed!" & vbNewLine & _
+                .ErrorMessage = "The Formula in this cell cannot be changed!" & vbNewLine & _
                 "Correct Formula is: =IFERROR(INDIRECT(CONCATENATE(""DATA!T"",ROW())),"""")"
+                .IgnoreBlank = False
+                .InCellDropdown = False
+            End With
+        Next
+        Dim cnt As Integer
+        cnt = 9
+        Set rng = ws.ListObjects(i).Range(1, 1)
+        For c = 0 To 2
+            rng.Offset(0, c).Validation.Delete
+            vData = ws.Parent.Worksheets("ROSTER").Cells(cnt, c + 2).Value
+            rng.Offset(0, c).Validation.Add xlValidateList, AlertStyle:=xlValidAlertStop, _
+            Operator:=xlEqual, Formula1:=vData
+            With rng.Offset(0, c).Validation
+                .ErrorMessage = "The Value in this cell cannot be changed!" & vbNewLine & _
+                "Correct Value is: " & vData
+                .IgnoreBlank = False
+                .InCellDropdown = False
+            End With
+        Next
+        For Each rng In ws.ListObjects(i).ListColumns(1).DataBodyRange
+            For c = 0 To 2
+                rng.Offset(0, c).Validation.Delete
+                vData = ws.Parent.Worksheets("ROSTER").Cells(cnt, c + 2).Value
+                rng.Offset(0, c).Validation.Add xlValidateList, AlertStyle:=xlValidAlertStop, _
+                Operator:=xlEqual, Formula1:=vData
+                With rng.Offset(0, c).Validation
+                    .ErrorMessage = "The Value in this cell cannot be changed!" & vbNewLine & _
+                    "Correct Value is: " & vData
+                    .IgnoreBlank = False
+                    .InCellDropdown = False
+                End With
+            Next
+            cnt = cnt + 1
+        Next
+        cnt = cnt - 2
+        Set rng = ws.ListObjects(i).ListColumns(1).DataBodyRange.End(xlDown).Offset(1, 0)
+        For c = 0 To 2
+            Debug.Print rng.Offset(0, c).Address
+            vData = ws.Parent.Worksheets("ROSTER").Cells(cnt, c + 2).Value
+            rng.Offset(0, c).Validation.Add xlValidateList, AlertStyle:=xlValidAlertStop, _
+            Operator:=xlEqual, Formula1:=vData
+            With rng.Offset(0, c).Validation
+                .ErrorMessage = "The Value in this cell cannot be changed!" & vbNewLine & _
+                "Correct Value is: " & vData
                 .IgnoreBlank = False
                 .InCellDropdown = False
             End With
@@ -619,7 +705,7 @@ Public Sub setDataValidation(ws As Worksheet)
     On Error GoTo 0
 End Sub
 
-Public Sub send_leadSheet(addr As String, lnk As String)
+Public Sub send_leadSheet(addr As String, lnk As String, view As Integer)
     Dim xEmailObj As Object ' Outlook.MailItem
 'GET DEFAULT EMAIL SIGNATURE
     On Error Resume Next
@@ -639,10 +725,12 @@ Public Sub send_leadSheet(addr As String, lnk As String)
     With xEmailObj
         .To = LCase(addr)
         .Subject = "Lead Sheet for " & jobNum & " Week Ending " & week
-        
         .HTMLBody = "</head><body lang=EN-US link=""#0563C1"" vlink=""#954F72"" style='tab-interval:.5in'><div class=WordSection1><p class=MsoNormal>Your lead sheet for week " & week & " is now available for download:</p><p class=MsoNormal><a href=""" & lnk & """>HERE</a><o:p></o:p></p><p class=MsoNormal><o:p>&nbsp;</o:p></p></div></body></html>"
-        .display
+        If view = vbYes Then
+            .display
+        Else
 '            .Send
+        End If
     End With
 End Sub
 
@@ -904,8 +992,9 @@ Public Sub savePacket()
         Kill xlFile
     End If
     bk.SaveAs xlFile
-'    FSO.CopyFolder xlPath, spPath, True
-    
+    If publish = vbYes Then
+        FSO.CopyFolder xlPath, spPath, True
+    End If
     On Error GoTo 0
 End Sub
 
@@ -1181,11 +1270,9 @@ Public Sub genTimeCard()
     we = Format(week, "mm.dd.yy")
     xlPath = jobPath & jobNum & "\Week_" & we & "\TimePackets\"
     xlFile = jobNum & "_Week_" & we & "_TimeCards.xlsx"
-    If loadRoster = -1 Then GoTo load_err
-    If timeCard.loadShifts = -1 Then
-        Stop
-    End If
-    Workbooks.Open ThisWorkbook.path & "\Master TC.xlsx", False
+    lApp.Run "'loadingtimer.xlsm'!update", "Building Roster"
+    Workbooks.Open ThisWorkbook.path & "\Master TC.xlsx"
+    
     Application.Visible = False
     Set wb_tc = Workbooks("Master TC.xlsx")
     wb_tc.SaveAs xlPath & xlFile
@@ -1196,15 +1283,14 @@ Public Sub genTimeCard()
     Dim tEmp As Variant
     For Each tEmp In weekRoster
         If tEmp Is Nothing Then
-            Exit For
         Else
             cnt = cnt + 1
         End If
     Next
+    Debug.Print cnt
     ThisWorkbook.Unprotect xPass
     For Each tEmp In weekRoster
         If tEmp Is Nothing Then
-            Exit For
         Else
             eCnt = eCnt + 1
             lApp.Run "'loadingtimer.xlsm'!update", "Generating Time Card " & eCnt & " of " & cnt
@@ -1245,6 +1331,7 @@ rep_add:
                         End If
                     End If
                 Next
+                .Range("A1").Activate
             End With
         End If
     Next
@@ -1266,7 +1353,6 @@ rep_add:
     ThisWorkbook.Protect xPass
     wb_tc.Save
     wb_tc.Close
-    
     
     Exit Sub
 load_err:
@@ -1340,47 +1426,88 @@ retry_emp:
         End If
     Next
     lApp.Run "'loadingtimer.xlsm'!update", "Generating Reports"
-    ActiveSheet.Range("B4", "C46").Value = vbNullString
-    With wb.Worksheets("TOTAL HOURS FROM TC's")
-        Set rng = .Cells(.Range("tHead").Row, .Range("tHead").Column).Offset(1, 0)
-        For Each tEmp In weekRoster
-            If tEmp Is Nothing Then
-            Else
-                For Each s In tEmp.getShifts
-                    If s.getHrs > 0 Then
-                        pCode = s.getPhase
-                        If pCode = -1 Then
-                            pCode = holiday
-                            pDesc = "Holiday"
-                        Else
-                            pDesc = s.getPhaseDesc
-                        End If
+    Dim pCodes() As String
+    ReDim pCodes(0)
+    Dim pFound As Boolean
+    pFound = False
+    For Each tEmp In weekRoster
+        If tEmp Is Nothing Then
+        Else
+            For Each s In tEmp.getShifts
+                If s.getHrs > 0 Then
+                    pCode = s.getPhase
+                    If pCode = -1 Then
+                        pCode = holiday
                     End If
-                    For i = 0 To .Range("PHASE_CODE").Rows.count
-                        Debug.Print pCode & " " & pDesc
-                        If rng.Offset(i, 0) = vbNullString Then
-                            rng.Offset(i, 0) = pCode
-                            rng.Offset(i, 1) = pDesc
-                            Exit For
-                        ElseIf rng.Offset(i, 0) = pCode Then
+                End If
+                Debug.Print pCode
+                pFound = False
+                For i = 0 To UBound(pCodes)
+                    If pCodes(i) = pCode Then
+                        pFound = True
+                        Exit For
+                    End If
+                Next
+                If pFound Then
+                Else
+                    Dim t As Integer
+                    For t = 0 To UBound(pCodes)
+                        If pCodes(t) > pCode Or pCodes(t) = vbNullString Then
+                            Dim t2 As Integer
+                            t2 = UBound(pCodes)
+                            Do While t2 > t
+                                pCodes(t2) = pCodes(t2 - 1)
+                                t2 = t2 - 1
+                            Loop
+                            pCodes(t) = pCode
+                            ReDim Preserve pCodes(UBound(pCodes) + 1)
                             Exit For
                         End If
                     Next
-                    If i = 45 Then
-                        rng.Offset(i, 0).EntireRow.Insert
-                        rng.Offset(i + 1, 0) = pCode
-                        rng.Offset(i + 1, 1) = pDesc
-                    End If
-                Next
-            End If
-        Next
-        If hideCells(1, .Range("tHead")) < 0 Then
-            Stop
+                End If
+            Next
         End If
-        If hideCells(2, .Range("PHASE_CODE")) < 0 Then
-            Stop
-        End If
-    End With
+    Next
+'    With wb.Worksheets("TOTAL HOURS FROM TC's")
+'        Set rng = .Cells(.Range("tHead").Row, .Range("tHead").Column).Offset(1, 0)
+'        For Each tEmp In weekRoster
+'            If tEmp Is Nothing Then
+'            Else
+'                For Each s In tEmp.getShifts
+'                    If s.getHrs > 0 Then
+'                        pCode = s.getPhase
+'                        If pCode = -1 Then
+'                            pCode = holiday
+'                            pDesc = "Holiday"
+'                        Else
+'                            pDesc = s.getPhaseDesc
+'                        End If
+'                    End If
+'                    For i = 0 To .Range("PHASE_CODE").Rows.count
+'                        Debug.Print pCode & " " & pDesc
+'                        If rng.Offset(i, 0) = vbNullString Then
+'                            rng.Offset(i, 0) = pCode
+'                            rng.Offset(i, 1) = pDesc
+'                            Exit For
+'                        ElseIf rng.Offset(i, 0) = pCode Then
+'                            Exit For
+'                        End If
+'                    Next
+'                    If i = 45 Then
+'                        rng.Offset(i, 0).EntireRow.Insert
+'                        rng.Offset(i + 1, 0) = pCode
+'                        rng.Offset(i + 1, 1) = pDesc
+'                    End If
+'                Next
+'            End If
+'        Next
+'        If hideCells(1, .Range("tHead")) < 0 Then
+'            Stop
+'        End If
+'        If hideCells(2, .Range("PHASE_CODE")) < 0 Then
+'            Stop
+'        End If
+'    End With
     Dim wb_arr() As String
     Dim lead_arr As String
     Dim xlLeadPath As String
@@ -1389,7 +1516,7 @@ retry_emp:
     xlLeadPath = jobPath & jobNum & "\Week_" & we & "\TimeSheets\"
     lead_arr = getLeadSheets(xlLeadPath)
     wb_arr = Split(lead_arr, ",")
-
+' ONLY NEEDED IF NOT CALLED AFTER GENTIMECARD AND LEAD SHEETS ARE NOT ALREADY OPEN
 '    For i = 0 To UBound(wb_arr)
 '        xlLeadFile = xlLeadPath & wb_arr(i)
 '        Workbooks.Open xlLeadFile
@@ -1398,10 +1525,21 @@ retry_emp:
     Dim n As Integer
     Dim trng As Range
     Dim moveShts() As String
-    Set rng = wb.Worksheets("LABOR T&G TOTAL").Range("lead_table")
+    Set rng = wb.Worksheets("LABOR T&G TOTAL").Range("D1", "I" & ActiveSheet.UsedRange.Rows.count + 3)
     For i = 1 To UBound(weekRoster)
-        rng.EntireColumn.Insert xlShiftToRight, rng
+        rng.Insert
         rng.Copy rng.Offset(0, -6)
+    Next
+    Dim c As Integer
+    c = UBound(weekRoster) + 1
+    c = c * 6 + 9
+    c = c + 1
+    Set rng = wb.Worksheets("LABOR T&G TOTAL").Cells(1, c)
+    rng.ColumnWidth = 18
+    rng.Offset(0, 1).ColumnWidth = 18
+    Set rng = wb.Worksheets("LABOR T&G TOTAL").Range("COST_CODE").Offset(1, 0)
+    For i = 0 To UBound(pCodes)
+        rng.Offset(i, 0) = pCodes(i)
     Next
     moveShts = Split("Labor Tracking & Goals,DAILY JOB REPORT,DAILY SIGN IN,TOOLBOX SIGN IN,LABOR RELEASE,EMPLOYEE EVALUATION", ",")
     Dim xSht As Integer
@@ -1459,10 +1597,31 @@ show_hiddenApp:
     End With
     wb.Worksheets("ROSTER").Activate
     Application.Visible = False
+    wb.Activate
+    On Error Resume Next
+    Dim xName As String
+    Dim drive() As String
+    Dim nm As name
+    Dim FSO As FileSystemObject
+    Set FSO = New FileSystemObject
+    For Each nm In wb.Names
+        xName = Right(nm.RefersTo, Len(nm.RefersTo) - 2)
+        drive = Split(xName, "\")
+        If FSO.DriveExists(drive(0)) Then
+            nm.Delete
+        End If
+    Next
+    If Err.Number <> 0 Then
+        Err.Clear
+    End If
+    On Error GoTo 0
+    Set FSO = Nothing
+
     wb.Save
     wb.Close False
-    'timeCard.getUpdatedFiles sharePointPath, jobPath, jobNum ' Transfer updated files to sharepoint
-    
+    If publish = vbYes Then
+        timeCard.getUpdatedFiles sharePointPath, jobPath, jobNum ' Transfer updated files to sharepoint
+    End If
 End Sub
 
 Public Sub showHiddenApps()
@@ -1560,7 +1719,6 @@ rt:
     Dim bVal As Integer
     Dim i As Integer
     Dim tmp As Range
-    lApp.Run "'loadingtimer.xlsm'!update", "Building Roster"
     ReDim weekRoster(0, eCount)
     i = 0
     xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
@@ -1680,4 +1838,71 @@ Public Function hideCells(t As Integer, fullRange As Range) As Integer
         End Select
         hideCells = cnt
 End Function
+
+Public Sub RescopeNamedRangesToWorkbook()
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim objName As name
+    Dim sWsName As String
+    Dim sWbName As String
+    Dim sRefersTo As String
+    Dim sObjName As String
+    Set wb = ActiveWorkbook
+    sWbName = wb.name
+    
+    For Each ws In wb.Sheets
+        sWsName = ws.name
+        'Loop through names in worksheet.
+        For Each objName In ws.Names
+        'Check name is visble.
+            If objName.Visible = True Then
+        'Check name refers to a range on the active sheet.
+                If InStr(1, objName.RefersTo, sWsName, vbTextCompare) Then
+                    sRefersTo = objName.RefersTo
+                    sObjName = objName.name
+        'Check name is scoped to the worksheet.
+                    If objName.Parent.name <> sWbName Then
+        'Delete the current name scoped to worksheet replacing with workbook scoped name.
+                        sObjName = Mid(sObjName, InStr(1, sObjName, "!") + 1, Len(sObjName))
+                        objName.Delete
+                        wb.Names.Add name:=sObjName, RefersTo:=sRefersTo
+                    End If
+                End If
+            End If
+        Next objName
+    Next ws
+End Sub
+
+Public Sub RescopeNamedRangesToWorksheet()
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim objName As name
+    Dim sWsName As String
+    Dim sWbName As String
+    Dim sRefersTo As String
+    Dim sObjName As String
+    Set wb = ActiveWorkbook
+    sWbName = wb.name
+    
+    For Each ws In wb.Sheets
+        sWsName = ws.name
+        'Loop through names in worksheet.
+        For Each objName In wb.Names
+        'Check name is visble.
+            If objName.Visible = True Then
+        'Check name refers to a range on the active sheet.
+                If InStr(1, objName.RefersTo, sWsName, vbTextCompare) Then
+                    sRefersTo = objName.RefersTo
+                    sObjName = objName.name
+        'Check name is scoped to the workbook.
+                    If objName.Parent.name = sWbName Then
+        'Delete the current name scoped to workbook replacing with worksheet scoped name.
+                        objName.Delete
+                        ws.Names.Add name:=sObjName, RefersTo:=sRefersTo
+                    End If
+                End If
+            End If
+        Next objName
+    Next ws
+End Sub
 
