@@ -12,6 +12,7 @@ Public Enum fileType
     builder = 2
     Installer = 3
 End Enum
+Public save As Boolean
 Public Sub showbook()
     ThisWorkbook.Worksheets("DATA").Visible = True
     ThisWorkbook.Worksheets("BUILD").Visible = True
@@ -22,6 +23,7 @@ Application.Visible = True
 
 End Sub
 Public Sub main()
+    save = False
     For i = 1 To ThisWorkbook.Sheets.count - 1
         ThisWorkbook.Worksheets(i).Visible = xlVeryHidden
     Next
@@ -31,10 +33,8 @@ Public Sub main()
     Dim reinstall As Boolean
     Dim testPath As String
     Dim myPath As String
-    If Left(ThisWorkbook.Worksheets(1).Range("aPath"), 9) <> "C:\Users\" Then
-        myPath = Environ$("appdata")
-        ThisWorkbook.Worksheets(1).Range("aPath").Value = myPath & ThisWorkbook.Worksheets(1).Range("aPath").Value
-    End If
+    myPath = Environ$("appdata") & "\HelixTimeCard"
+    ThisWorkbook.Worksheets(1).Range("aPath").Value = myPath
     testPath = Dir(ThisWorkbook.Worksheets(1).Range("aPath"), vbDirectory)
     If testPath = "" Then
         ThisWorkbook.Worksheets(1).Range("appinstalled") = False
@@ -89,13 +89,14 @@ uninstall_line:
                 ElseIf retryAns = vbYes Then
                     main_install
                 End If
+            ElseIf ans = 3 Then
             Else
                 MsgBox "Unable to uninstall!" & vbNewLine & vbNewLine & "Please close all files and try again", vbCritical + vbOKOnly, "ERROR"
             End If
         End If
     Else
-        If Environ$("username") <> "jsikorski" Then
-            'ThisWorkbook.Close , False
+        If reinstall Then
+            main_run
         End If
     End If
     GoTo clean_up:
@@ -106,12 +107,14 @@ clear_bad_install:
     RmDir ws.Range("aPath")
 clean_up:
     Set mMenu = Nothing
+    ThisWorkbook.Protect "3078hei-Admin504"
 End Sub
 
 Public Function main_uninstall(Optional reinstall As Boolean) As Integer
     'On Error GoTo uninstall_err
     ans = MsgBox("Are you sure you want to uninstall " & Left(ThisWorkbook.Name, Len(ThisWorkbook.Name) - 5) & "?", vbExclamation + vbOKCancel, "CONFIRM UNINSTALL")
     If ans <> vbOK Then
+        main_uninstall = 3
         Exit Function
     End If
 
@@ -141,11 +144,6 @@ Public Function main_uninstall(Optional reinstall As Boolean) As Integer
         FSO.DeleteFolder fol, True
     Next
     FSO.DeleteFolder ws.Range("apath"), True
-    If FSO.FolderExists(iPath & "Time Card Generator") Then
-        On Error GoTo uninstall_err
-        FSO.DeleteFolder iPath & "Time Card Generator"
-        On Error GoTo 0
-    End If
     Dim path() As String
     path = Split(ws.Range("aPath"), "\")
     ws.Range("apath") = "\" & path(UBound(path))
@@ -157,6 +155,11 @@ Public Function main_uninstall(Optional reinstall As Boolean) As Integer
         Else
             MsgBox "Installation Complete!", vbOKOnly + vbInformation, "SUCCESS!"
         End If
+    End If
+    If FSO.FolderExists(iPath & "Time Card Generator") Then
+        On Error GoTo uninstall_err
+        FSO.DeleteFolder iPath & "Time Card Generator"
+        On Error GoTo 0
     End If
     GoTo clean_up
 uninstall_err:
@@ -179,6 +182,8 @@ clean_up:
     Set ws = Nothing
     Set shl = Nothing
     If FSO.FileExists(iPath & "Time Card Generator/" & ThisWorkbook.Name) Then
+        ThisWorkbook.SaveAs Environ$("appdata") & "tmp.xlsm"
+        FSO.DeleteFolder iPath & "Time Card Generator"
         Set FSO = Nothing
         killThisFile
     End If
@@ -248,13 +253,13 @@ Public Function main_install() As Integer
     makeLnkPath ws.Range("sp_path")
     rebuildFile (fileType.master)
     ExportVisualBasicCode.importDataFile
-    Workbooks(ws.Range("aFile").Value).Worksheets("HOME").Range("reg_user").Value = ws.Range("reg_user").Value
-    Workbooks(ws.Range("aFile").Value).Worksheets("HOME").Range("reg_pass").Value = ws.Range("reg_password").Value
     ws.Range("reg_user").Clear
     ws.Range("reg_password").Clear
     ws.Range("appinstalled").Value = True
     Workbooks(ws.Range("aFile").Value).Protect getXPass
-    Workbooks(ThisWorkbook.Worksheets(dt).Range("aFile").Value).Save
+    save = True
+    Workbooks(ThisWorkbook.Worksheets(dt).Range("aFile").Value).save
+    save = False
     Workbooks(ThisWorkbook.Worksheets(dt).Range("aFile").Value).Close
     If FSO.FolderExists(iPath & "Time Card Generator") Then
         ThisWorkbook.SaveAs iPath & "Time Card Generator\" & exeName
@@ -287,7 +292,7 @@ Public Function makeLnkPath(ByVal lnk As String) As Integer
     Set oURLlink = WshShell.CreateShortcut(ThisWorkbook.Worksheets(dt).Range("aPath") & "\Data.URL")
     With oURLlink
         .TargetPath = lnk
-        .Save
+        .save
         makeLnkPath = 1
         Exit Function
    End With
