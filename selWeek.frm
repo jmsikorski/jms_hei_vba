@@ -24,13 +24,14 @@ Private Sub UserForm_Initialize()
         .Left = Application.Left + (0.5 * Application.Width) - (0.5 * .Width)
         .Top = Application.Top + (0.5 * Application.Height) - (0.5 * .Height)
     End With
-    Dim thisWeek As Date
-    Dim nextWeek As Date
-    thisWeek = calcWeek(Date)
-    nextWeek = calcWeek(Date + 7)
+    Dim i As Integer, wks As Integer
+    Dim stDate As Date
+    wks = 2
+    stDate = calcWeek(Date - 7)
     With Me.ComboBox1
-        .AddItem thisWeek
-        .AddItem nextWeek
+        For i = 0 To wks
+            .AddItem Format(calcWeek(Date - 7 + i * 7), "m/dd/yy")
+        Next
 '            .AddItem tEmp.Offset(0, -3) & " " & tEmp.Offset(0, -4)
 '            .list(.ListCount - 1, 1) = tEmp.Offset(0, 1).Value
     End With

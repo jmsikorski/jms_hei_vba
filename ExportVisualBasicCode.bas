@@ -269,7 +269,7 @@ Attribute rebuildFile.VB_ProcData.VB_Invoke_Func = "S\n14"
             Debug.Print "ERROR REBUILDING FILE"
             Exit Sub
     End Select
-    Application.EnableEvents = False
+    'application.enableevents = False
     Workbooks.Open ThisWorkbook.path & "\" & xlFile
     Application.EnableEvents = True
     Workbooks(xlFile).Activate

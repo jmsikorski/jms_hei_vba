@@ -17,7 +17,7 @@ Public jobNum As String
 Public jobName As String
 Public weekRoster() As Employee
 Public mMenu As mainMenu
-Public sMenu As pjSuperMenu
+Public sMenu As pjSupMenu
 Public lMenu As pjSuperPkt
 Public tReview As teamReview
 Public Const eCount = 15
@@ -29,7 +29,7 @@ Public publish As Integer
 Public Const holiday = "88080-08"
 Public Enum mType
     mainMenu = 1
-    pjSuperMenu = 2
+    pjSupMenu = 2
     pjSuperPkt = 3
     pjSuperPktEmp = 4
 End Enum
@@ -64,7 +64,7 @@ End Sub
 
 Public Sub t123()
     ThisWorkbook.Unprotect getXPass
-    Sheet5.Unprotect
+'    Sheet5.Unprotect
 End Sub
 
 Public Function getSharePointLink(xlPath As String) As String
@@ -210,8 +210,8 @@ Public Sub BreakLinks()
     Next
     If Not IsEmpty(wb.LinkSources(xlExcelLinks)) Then
         For Each link In wb.LinkSources(xlExcelLinks)
-            Debug.Print "BROKEN HERE!"
-            'wb.BreakLink link, xlLinkTypeExcelLinks
+            Debug.Print link
+            wb.BreakLink link, xlLinkTypeExcelLinks
         Next link
     End If
 End Sub
@@ -224,7 +224,7 @@ Public Sub addMenu(mType As Integer)
         Case 1
             Set tmp = New mainMenu
         Case 2
-            Set tmp = New pjSuperMenu
+            Set tmp = New pjSupMenu
         Case 3
             Set tmp = New pjSuperPkt
         Case 4
@@ -384,9 +384,9 @@ Public Function loadShifts() As Integer
         n = 0
     Next l
     Dim wb As Integer
-'    For wb = 0 To UBound(wb_arr)
-'        Workbooks(wb_arr(wb)).Close False
-'    Next
+    For wb = 0 To UBound(wb_arr)
+        Workbooks(wb_arr(wb)).Close False
+    Next
     loadShifts = 1
     Exit Function
 shift_err:
@@ -466,9 +466,9 @@ Public Sub genLeadSheets()
     Dim r_size As Integer
     Dim bk As Workbook
     On Error Resume Next
-    Workbooks.Open jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+    Workbooks.Open jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsm"
     On Error GoTo 0
-    Set bk = Workbooks(jobNum & "_Week_" & we & ".xlsx")
+    Set bk = Workbooks(jobNum & "_Week_" & we & ".xlsm")
     Dim i As Integer
     For i = 0 To UBound(weekRoster)
         lApp.Run "'loadingtimer.xlsm'!update", "Building Lead Sheets " & i + 1 & " of " & UBound(weekRoster) + 1
@@ -568,8 +568,7 @@ Public Sub genLeadSheets()
                     End With
                     Dim rage As Range
                     Set rage = .Range(rng.End(xlDown).Offset(3, 0), .ListObjects(nday).HeaderRowRange.Offset(-2, 0))
-                    Application.Visible = True
-                    If .Range(rng.End(xlDown).Offset(3, 0)).Row < .ListObjects(nday).HeaderRowRange.Offset(-2, 0).Row Then
+                    If rng.End(xlDown).Offset(3, 0).Row < .ListObjects(nday).HeaderRowRange.Offset(-2, 0).Row Then
                         rage.EntireRow.Delete
                     End If
                 Else
@@ -878,9 +877,17 @@ login_retry:
     uNum = -1
     i = 0
     If get_lic("https://raw.githubusercontent.com/jmsikorski/hei_misc/master/Licence.txt") Then
-        
+rt:
         If Environ$("username") = user Then
             Dim uPass As String
+            If ThisWorkbook.Worksheets("HOME").Range("reg_pass") = vbNullString Then
+                loginMenu.Show
+                user = loginMenu.TextBox2.Value
+                If user = Environ$("username") Then
+                    ThisWorkbook.Worksheets("HOME").Range("reg_pass") = loginMenu.TextBox1.Value
+                    ThisWorkbook.Worksheets("HOME").Range("reg_user") = loginMenu.TextBox2.Value
+                End If
+            End If
             uPass = encryptPassword(ThisWorkbook.Worksheets("HOME").Range("reg_pass"))
             pw = uPass
         Else
@@ -1004,9 +1011,9 @@ Public Sub savePacket()
     makeWeekPath we
     xlPath = jobPath & jobNum & "\Week_" & we & "\TimePackets"
     spPath = sharePointPath & jobNum & "\Week_" & we & "\TimePackets"
-    xlFile = xlPath & "\" & jobNum & "_Week_" & we & ".xlsx"
-    Workbooks.Open ThisWorkbook.path & "\Packet Template.xlsx"
-    Set bk = Workbooks("Packet Template.xlsx")
+    xlFile = xlPath & "\" & jobNum & "_Week_" & we & ".xlsm"
+    Workbooks.Open ThisWorkbook.path & "\Packet Template.xlsm"
+    Set bk = Workbooks("Packet Template.xlsm")
     saveWeekRoster bk.Sheets("SAVE")
     If genRoster(bk, bk.Worksheets("ROSTER")) = -1 Then
         MsgBox ("ERROR PRINTING ROSTER")
@@ -1019,7 +1026,9 @@ Public Sub savePacket()
     If publish = vbYes Then
         FSO.CopyFolder xlPath, spPath, True
     End If
-    On Error GoTo 0
+    Set wb = Nothing
+    Set FSO = Nothing
+    Set bk = Nothing
 End Sub
 
 Public Function genRoster(ByRef wb As Workbook, ByRef ws As Worksheet, Optional lead As Integer) As Integer
@@ -1197,11 +1206,11 @@ Public Function isSave() As Integer
     Dim we As String
     Dim tmp() As String
     we = Format(week, "mm.dd.yy")
-    xlFile = sharePointPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+    xlFile = sharePointPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsm"
     If testFileExist(xlFile) > 0 Then
         isSave = 1
     Else
-        xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+        xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsm"
         If testFileExist(xlFile) > 0 Then
             isSave = 1
         Else
@@ -1290,16 +1299,43 @@ Public Sub genTimeCard()
     Dim we As String
     Dim shtCnt As Integer
     Dim wb_tc As Workbook
+    Dim tcRev As String
+    Dim i As Integer
+    Dim ws As Worksheet
+    Dim rng As Range
+    i = 1
     shtCnt = 0
     we = Format(week, "mm.dd.yy")
     xlPath = jobPath & jobNum & "\Week_" & we & "\TimePackets\"
-    xlFile = jobNum & "_Week_" & we & "_TimeCards.xlsx"
+    xlFile = jobNum & "_Week_" & we & "_TimeCards"
+    tcRev = vbNullString
     lApp.Run "'loadingtimer.xlsm'!update", "Building Roster"
     Workbooks.Open ThisWorkbook.path & "\Master TC.xlsx"
 
     Application.Visible = False
     Set wb_tc = Workbooks("Master TC.xlsx")
-    wb_tc.SaveAs xlPath & xlFile
+    Do While testFileExist(xlPath & xlFile & tcRev & ".xlsx") > 0
+        tcRev = "Rev" & i
+        i = i + 1
+    Loop
+        
+    wb_tc.SaveAs xlPath & xlFile & tcRev & ".xlsx"
+    Set ws = wb_tc.Worksheets.Add(after:=wb_tc.Worksheets(wb_tc.Sheets.count))
+    ws.name = "REPORT"
+    ws.ListObjects.Add
+    With ws.ListObjects(1)
+        .name = "TimeCardReport"
+        For i = 0 To 3
+            .ListColumns.Add
+        Next
+        .ListColumns(1).name = "DAY"
+        .ListColumns(2).name = "EMP #"
+        .ListColumns(3).name = "NAME"
+        .ListColumns(4).name = "PHASE"
+        .ListColumns(5).name = "HRS"
+        .ShowAutoFilterDropDown = False
+        .TableStyle = "TableStyleMedium3"
+    End With
     Dim cnt As Integer
     Dim eCnt As Integer
     eCnt = 0
@@ -1311,16 +1347,17 @@ Public Sub genTimeCard()
             cnt = cnt + 1
         End If
     Next
-    Debug.Print cnt
     ThisWorkbook.Unprotect xPass
     For Each tEmp In weekRoster
         If tEmp Is Nothing Then
         Else
+            Debug.Print tEmp.getFullname
             eCnt = eCnt + 1
             lApp.Run "'loadingtimer.xlsm'!update", "Generating Time Card " & eCnt & " of " & cnt
             shtCnt = shtCnt + 1
             wb_tc.Worksheets(1).Copy after:=wb_tc.Worksheets(wb_tc.Sheets.count)
             With wb_tc.Worksheets(wb_tc.Sheets.count)
+                Application.Visible = True
                 .name = tEmp.getNum
                 .Range("e_name") = tEmp.getFullname
                 .Range("e_num") = tEmp.getNum
@@ -1328,10 +1365,26 @@ Public Sub genTimeCard()
                 .Range("job_desc") = jobNum & " - " & jobName
                 Dim tshft As shift
                 For Each tshft In tEmp.getShifts
-                    Dim i As Integer
                     i = 0
-rep_add:
                     If tshft.getPhase <> 0 And tshft.getPhase <> -1 Then
+                        ws.ListObjects(1).ListRows.Add
+                        Set rng = ws.ListObjects(1).ListRows(ws.ListObjects(1).ListRows.count).Range.Cells(1, 1)
+                        With rng
+                            Select Case tshft.getDay
+                            Case 1: .Value = "Monday"
+                            Case 2: .Value = "Tuesday"
+                            Case 3: .Value = "Wednesday"
+                            Case 4: .Value = "Thursday"
+                            Case 5: .Value = "Friday"
+                            Case 6: .Value = "Saturday"
+                            Case 7: .Value = "Sunday"
+                            End Select
+                            .Offset(0, 1).Value = tEmp.getNum
+                            .Offset(0, 2).Value = tEmp.getFullname
+                            .Offset(0, 3).Value = tshft.getPhase
+                            .Offset(0, 4).Value = tshft.getHrs
+                        End With
+rep_add:
                         If .Range("COST_CODE").Offset(i, 0) = vbNullString Then
                             .Range("COST_CODE").Offset(i, 0) = tshft.getPhase
                             .Range("COST_CODE").Offset(i, 2) = tshft.getPhaseDesc
@@ -1343,6 +1396,23 @@ rep_add:
                             GoTo rep_add
                         End If
                     ElseIf tshft.getPhase = -1 Then
+                        ws.ListObjects(1).ListRows.Add
+                        Set rng = ws.ListObjects(1).ListRows(ws.ListObjects(1).ListRows.count).Range.Cells(1, 1)
+                        With rng
+                            Select Case tshft.getDay
+                            Case 1: .Value = "Monday"
+                            Case 2: .Value = "Tuesday"
+                            Case 3: .Value = "Wednesday"
+                            Case 4: .Value = "Thursday"
+                            Case 5: .Value = "Friday"
+                            Case 6: .Value = "Saturday"
+                            Case 7: .Value = "Sunday"
+                            End Select
+                            .Offset(0, 1).Value = tEmp.getNum
+                            .Offset(0, 2).Value = tEmp.getFullname
+                            .Offset(0, 3).Value = holiday
+                            .Offset(0, 4).Value = tshft.getHrs
+                        End With
                         If .Range("COST_CODE").Offset(i, 0) = vbNullString Then
                             .Range("COST_CODE").Offset(i, 0) = holiday
                             .Range("COST_CODE").Offset(i, 2) = "Holiday"
@@ -1354,7 +1424,7 @@ rep_add:
                             GoTo rep_add
                         End If
                     End If
-                Next
+                Next tshft
                 .Range("A1").Activate
             End With
         End If
@@ -1373,16 +1443,285 @@ rep_add:
             End If
         Next j
     Next n
-
+    If tcRev <> vbNullString Then
+        mark_revisions
+    End If
+    Application.AddCustomList ListArray:=Array("Monday", "Tuesday", "Wednesday", _
+    "Thursday", "Friday", "Saturday", "Sunday")
+    ws.Activate
+    ws.ListObjects("TimeCardReport").Sort.SortFields.Clear
+    ws.ListObjects("TimeCardReport").Sort.SortFields.Add _
+        key:=Range("TimeCardReport[DAY]"), SortOn:=xlSortOnValues, _
+        Order:=xlAscending, CustomOrder:= _
+        "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday", DataOption:= _
+        xlSortNormal
+    With ws.ListObjects("TimeCardReport").Sort
+        .header = xlYes
+        .MatchCase = False
+        .Orientation = xlTopToBottom
+        .SortMethod = xlPinYin
+        .Apply
+    End With
+    ws.ListObjects("TimeCardReport").DataBodyRange.EntireColumn.AutoFit
+    ws.Activate
+    ws.Range("A1").Select
     ThisWorkbook.Protect xPass
     wb_tc.Save
+    Application.Visible = True
     wb_tc.Close
-
+    Application.Visible = False
     Exit Sub
 load_err:
     MsgBox "No Packet Found!"
 
 End Sub
+Public Sub mark_revisions()
+    Dim revWBName As String
+    Dim revWB As Workbook
+    Dim ws As Worksheet
+    Dim phaseRange As Range
+    Dim rng As Range
+    Dim revRng As Range
+    Dim i As Integer, q As Integer
+    Dim tc_wb As Workbook
+    Dim x As ListObject
+    Dim rx As ListObject
+    Dim c As Range
+    Dim rc As Range
+    Dim found As Boolean
+    Dim firstAddress As String
+    Dim d As String
+    Set tc_wb = ActiveWorkbook
+    revWBName = get_revisions(ActiveWorkbook.name)
+    If revWBName = vbNullString Then
+        Exit Sub
+    End If
+    If testFileExist(ActiveWorkbook.path & "\" & revWBName) > 0 Then
+        On Error Resume Next
+        Workbooks.Open ActiveWorkbook.path & "\" & revWBName
+        If Err.Number <> 0 Then
+            Err.Clear
+        End If
+        On Error GoTo 0
+    End If
+    Set revWB = Workbooks(revWBName)
+    Set x = tc_wb.Worksheets("REPORT").ListObjects("TimeCardReport")
+    Set rx = revWB.Worksheets("REPORT").ListObjects("TimeCardReport")
+    Application.Visible = True
+rt:
+    rx.DataBodyRange.Interior.Color = 16777215
+    For i = 6 To rx.ListColumns.count
+        rx.ListColumns(i).Delete
+    Next
+    For i = 0 To 6
+        Select Case i
+            Case 0: d = "Monday"
+            Case 1: d = "Tuesday"
+            Case 2: d = "Wednesday"
+            Case 3: d = "Thursday"
+            Case 4: d = "Friday"
+            Case 5: d = "Saturday"
+            Case 6: d = "Sunday"
+        End Select
+        Set c = x.ListColumns("DAY").DataBodyRange.Find(d)
+        If Not c Is Nothing Then
+            firstAddress = c.Address
+            found = False
+            Do
+                For Each rc In rx.ListColumns("DAY").DataBodyRange
+                    If rc.Offset(0, 4) <> 0 Then
+                        For q = 0 To 3
+                            If rc.Offset(0, q) <> c.Offset(0, q) Then
+                                found = False
+                                Exit For
+                            Else
+                                rx.Range(rc.Row, rc.Offset(0, q).Column).Interior.Color = 65535
+                                found = True
+                            End If
+                        Next q
+                        If found And rc.Offset(0, 4) <> c.Offset(0, 4) Then
+                            found = False
+                            Exit For
+                        ElseIf found And rc.Offset(0, 4) = c.Offset(0, 4) Then
+                            rx.Range(rc.Row, rc.Offset(0, q).Column).Interior.Color = 65535
+                            Exit For
+                        Else
+                            found = False
+                        End If
+                    Else
+                        rc.EntireRow.Delete
+                    End If
+                Next
+                If Not found Then
+                    Set ws = tc_wb.Worksheets(CStr(c.Offset(0, 1)))
+                    Select Case c
+                        Case "Monday": q = 4
+                        Case "Tuesday": q = 5
+                        Case "Wednesday": q = 6
+                        Case "Thursday": q = 7
+                        Case "Friday": q = 8
+                        Case "Saturday": q = 9
+                        Case "Sunday": q = 10
+                    End Select
+                    ws.Tab.Color = 65535
+                    For Each revRng In ws.Range("COST_CODE", ws.Range("COST_CODE").End(xlDown))
+                        If revRng = c.Offset(0, 3) Then
+                            revRng.Offset(0, q).Interior.Color = 65535
+                            revRng.Offset(0, 11).Interior.Color = 65535
+                            Exit For
+                        End If
+                    Next
+                    If rc Is Nothing Then
+                        c.Offset(0, 5) = "ADDED: " & c.Offset(0, 4) & " HRS TO " & c.Offset(0, 3)
+'                        c.Offset(0, 5) = c & " " & c.Offset(0, 1).Value & " " & c.Offset(0, 2) & " ADDED: " & c.Offset(0, 4) & " HRS TO " & c.Offset(0, 3)
+                    ElseIf rc.Offset(0, 4) <> c.Offset(0, 4) Then
+                        c.Offset(0, 5) = "CHANGED: " & c.Offset(0, 3).Value & " FROM " & rc.Offset(0, 4).Value & " HRS TO " & c.Offset(0, 4).Value
+'                        c.Offset(0, 5) = c & " " & c.Offset(0, 1).Value & " " & c.Offset(0, 2) & " CHANGED: " & c.Offset(0, 3).Value & " FROM " & rc.Offset(0, 4).Value & " HRS TO " & c.Offset(0, 4).Value
+                    End If
+                    x.ListRows(c.Row - 1).Range.Interior.Color = 65535
+                End If
+                Set c = x.ListColumns("DAY").DataBodyRange.FindNext(c)
+            Loop While Not c Is Nothing And c.Address <> firstAddress
+        End If
+    Next i
+    For Each rc In rx.ListColumns("PHASE").DataBodyRange
+        If rc.Interior.Color <> 65535 Then
+            x.ListRows.Add
+            For q = 0 To 3
+                x.Range(x.ListRows.count + 1, q + 1) = rc.Offset(0, -3).Offset(0, q)
+            Next
+            x.Range(x.ListRows.count + 1, 5) = 0
+            x.ListRows(x.ListRows.count).Range.Interior.Color = 65535
+            x.Range(x.ListRows.count + 1, 1).Offset(0, 5) = "REMOVED: " & rc.Offset(0, 1) & " HRS FROM " & rc
+'            x.Range(x.ListRows.count + 1, 1).Offset(0, 5) = rc.Offset(0, -3) & " " & rc.Offset(0, -2).Value & " " & rc.Offset(0, -1) & " REMOVED: " & rc.Offset(0, 1) & " HRS FROM " & rc
+        End If
+    Next
+    If x.ListColumns.count > 5 Then
+        x.ListColumns(x.ListColumns.count).name = "Notes"
+    End If
+    Application.Visible = True
+    revWB.Close False
+    Application.Visible = False
+    Set FSO = Nothing
+End Sub
+Public Sub mark_revisions_old()
+    Dim revWBName As String
+    Dim revWB As Workbook
+    Dim ws As Worksheet
+    Dim phaseRange As Range
+    Dim rng As Range
+    Dim revRng As Range
+    Dim i As Integer
+    Dim tc_wb As Workbook
+    Dim x As ListObject
+    Dim c As Range
+    Dim firstAddress As String
+    Dim FSO As FileSystemObject
+    Set FSO = New FileSystemObject
+    Dim txtReport As TextStream
+    Set tc_wb = ActiveWorkbook
+    Set txtReport = FSO.CreateTextFile(tc_wb.path & "\" & tc_wb.name & "_DELTAS.txt", True)
+    revWBName = get_revisions(ActiveWorkbook.name)
+    If revWBName = vbNullString Then
+        Exit Sub
+    End If
+    If testFileExist(ActiveWorkbook.path & "\" & revWBName) > 0 Then
+        On Error Resume Next
+        Workbooks.Open ActiveWorkbook.path & "\" & revWBName
+        If Err.Number <> 0 Then
+            Err.Clear
+        End If
+        On Error GoTo 0
+    End If
+    Application.Visible = True
+    Set revWB = Workbooks(revWBName)
+    For Each ws In tc_wb.Sheets
+        If ws.name <> "REPORT" Then
+        Set phaseRange = revWBworksheets(ws.name).Range("COST_CODE", revWBworksheets(ws.name).Range("COST_CODE").End(xlDown))
+        For Each rng In phaseRange
+            Set revRng = ws.Range("COST_CODE", ws.Range("COST_CODE").End(xlDown)).Find(rng.Value)
+            If Not revRng Is Nothing Then
+                firstAddress = revRng.Address
+                Do
+                    GoTo pc_found
+                Loop While Not c Is Nothing And c.Address <> firstAddress
+                For i = 4 To 10
+pc_found:
+            End If
+        Set phaseRange = ws.Range("COST_CODE", ws.Range("COST_CODE").End(xlDown))
+        For Each rng In phaseRange
+            If rng.Offset(0, 11).Value <> revWB.Worksheets(ws.name).Range(rng.Address).Offset(0, 11).Value Or _
+                rng.Value <> revWB.Worksheets(ws.name).Range(rng.Address).Value Then
+                ws.Tab.Color = 65535
+                Set revRng = revWBworksheets(ws.name).Range("COST_CODE", revWBworksheets(ws.name).Range("COST_CODE").End(xlDown)).Find(rng.Value)
+                For i = 4 To 10
+                    If revRng Is Nothing Then
+                        If rng.Offset(0, i).Value <> 0 Or rng.Offset(0, i).Value <> vbNullString Then
+                            GoTo new_pc
+                        Else
+                            GoTo rev_set
+                        End If
+                    End If
+                    If rng.Offset(0, i).Value <> revRng.Offset(0, i).Value Then
+new_pc:
+                        rng.Offset(0, i).Interior.Color = 65535
+                        rng.Offset(0, 11).Interior.Color = 65535
+                        Dim d As String
+                        Select Case i
+                            Case 4: d = "Monday"
+                            Case 5: d = "Tuesday"
+                            Case 6: d = "Wednesday"
+                            Case 7: d = "Thursday"
+                            Case 8: d = "Friday"
+                            Case 9: d = "Saturday"
+                            Case 10: d = "Sunday"
+                        End Select
+                        
+                        Set x = ws.Parent.Worksheets("REPORT").ListObjects(1)
+                        Set c = x.ListColumns("DAY").DataBodyRange.Find(d)
+                        If Not c Is Nothing Then
+                            firstAddress = c.Address
+                            Do
+                                If c.Offset(0, 1).Value = ws.name Then
+                                    If c.Offset(0, 3).Value = rng.Value Then
+                                        c.Offset(0, 4).Interior.Color = 65535
+                                        GoTo rev_set
+                                    End If
+                                End If
+                                Set c = x.ListColumns("DAY").DataBodyRange.FindNext(c)
+                            Loop While Not c Is Nothing And c.Address <> firstAddress
+                        End If
+                    End If
+rev_set:
+                Next
+            End If
+        Next
+        End If
+    Next
+    Application.Visible = True
+    revWB.Close False
+    Application.Visible = False
+    
+End Sub
+
+Public Function get_revisions(t As String) As String
+    Dim pRev As String
+    Dim pRevNum As Integer
+    Dim tRev() As String
+    tRev = Split(t, "Rev")
+    Dim i As Integer
+
+    If UBound(tRev) = 0 Then
+        get_revisions = vbNullString
+    Else
+        pRevNum = Int(Left(tRev(1), InStr(1, tRev(1), ".") - 1)) - 1
+        If pRevNum = 0 Then
+            get_revisions = tRev(0) & Right(tRev(1), Len(tRev(1)) - (InStr(1, tRev(1), ".") - 1))
+        Else
+            get_revisions = tRev(0) & "Rev" & pRevNum & Right(tRev(1), Len(tRev(1)) - (InStr(1, tRev(1), ".") - 1))
+        End If
+    End If
+End Function
 
 Public Sub bubblesortWorksheets(wb As String)
     Dim wb_tc As Workbook
@@ -1420,16 +1759,37 @@ Public Sub updatePacket()
     Dim s As Variant
     Dim ws As Worksheet
     Dim nm As name
-
+    Dim tcRev As String
+rt:
+    If Err.Number <> 0 Then
+        Err.Clear
+    End If
+    On Error GoTo 0
+    i = 0
     we = Format(week, "mm.dd.yy")
     xlPath = jobPath & jobNum & "\Week_" & we & "\TimePackets\"
-    xlFile = jobNum & "_Week_" & we & ".xlsx"
-    xlTCFile = jobNum & "_Week_" & we & "_TimeCards.xlsx"
-
-    Workbooks.Open xlPath & xlFile
+    xlFile = jobNum & "_Week_" & we
+    xlTCFile = jobNum & "_Week_" & we & "_TimeCards"
+    tcRev = vbNullString
+    Do While testFileExist(xlPath & xlTCFile & tcRev & ".xlsx") > 0
+        i = i + 1
+        tcRev = "Rev" & i
+    Loop
+    tcRev = "Rev" & i - 1
+    If tcRev = "Rev0" Then
+        tcRev = vbNullString
+    End If
+    xlTCFile = xlTCFile & tcRev & ".xlsx"
+    On Error Resume Next
+    Workbooks.Open xlPath & xlFile & ".xlsm"
     Workbooks.Open xlPath & xlTCFile
+    If Err.Number <> 0 Then
+        Err.Clear
+    End If
+    On Error GoTo 0
+    i = 0
     Application.Visible = False
-    Set wb = Workbooks(xlFile)
+    Set wb = Workbooks(xlFile & ".xlsm")
     Set tc_wb = Workbooks(xlTCFile)
     cnt = 0
     Set rng = wb.Worksheets("ROSTER").Range("emp_num")
@@ -1452,15 +1812,25 @@ retry_emp:
             End If
         End If
     Next
+    Dim FSO As FileSystemObject
+Dim a As TextStream
+Set FSO = New FileSystemObject
+Set a = FSO.CreateTextFile(ThisWorkbook.path & "\ErrLog.txt", True)
+a.WriteLine "1644"
+
     lApp.Run "'loadingtimer.xlsm'!update", "Generating Reports"
+a.WriteLine "1647"
     Dim pCodes() As String
+a.WriteLine "1649"
     ReDim pCodes(0)
     Dim pFound As Boolean
     pFound = False
     For Each tEmp In weekRoster
         If tEmp Is Nothing Then
         Else
+a.WriteLine "1656: " & tEmp.getFullname
             For Each s In tEmp.getShifts
+a.WriteLine "1658: " & s.getPhase
                 If s.getHrs > 0 Then
                     pCode = s.getPhase
                     If pCode = -1 Then
@@ -1469,6 +1839,7 @@ retry_emp:
                 End If
                 pFound = False
                 For i = 0 To UBound(pCodes)
+a.WriteLine "1667: " & i
                     If pCodes(i) = pCode Then
                         pFound = True
                         Exit For
@@ -1476,8 +1847,10 @@ retry_emp:
                 Next
                 If pFound Then
                 Else
+a.WriteLine "1675"
                     Dim t As Integer
                     For t = 0 To UBound(pCodes)
+a.WriteLine "1678: " & t
                         If pCodes(t) > pCode Or pCodes(t) = vbNullString Then
                             Dim t2 As Integer
                             t2 = UBound(pCodes)
@@ -1527,9 +1900,11 @@ retry_emp:
 '                Next
 '            End If
 '        Next
+a.WriteLine "1728"
         If hideCells(1, wb.Worksheets("TOTAL HOURS FROM TC's").Range("tHead")) < 0 Then
             Stop
         End If
+a.WriteLine "1732"
 '        If hideCells(2, .Range("PHASE_CODE")) < 0 Then
 '            Stop
 '        End If
@@ -1540,46 +1915,79 @@ retry_emp:
     Dim xlLeadFile As String
     Dim leadBook As Workbook
     xlLeadPath = jobPath & jobNum & "\Week_" & we & "\TimeSheets\"
+a.WriteLine "1743"
     lead_arr = getLeadSheets(xlLeadPath)
+a.WriteLine "1745"
     wb_arr = Split(lead_arr, ",")
-' ONLY NEEDED IF NOT CALLED AFTER GENTIMECARD AND LEAD SHEETS ARE NOT ALREADY OPEN
-'    For i = 0 To UBound(wb_arr)
-'        xlLeadFile = xlLeadPath & wb_arr(i)
-'        Workbooks.Open xlLeadFile
-'    Next
+a.WriteLine "1747"
+ 'ONLY NEEDED IF NOT CALLED AFTER GENTIMECARD AND LEAD SHEETS ARE NOT ALREADY OPEN
+    For i = 0 To UBound(wb_arr)
+    a.WriteLine "lbound: " & LBound(wb_arr)
+    a.WriteLine "ubound: " & UBound(wb_arr)
+    a.WriteLine "1748: " & i
+        xlLeadFile = xlLeadPath & wb_arr(i)
+    a.WriteLine "1749: " & i
+    a.WriteLine "xlLeadFile: " & xlLeadFile
+        Workbooks.Open xlLeadFile
+    a.WriteLine "1750: " & i
+    Next
+a.WriteLine "1753"
     Application.Visible = False
     Dim n As Integer
     Dim trng As Range
     Dim moveShts() As String
-    Set rng = wb.Worksheets("LABOR T&G TOTAL").Range("D1", "I" & ActiveSheet.UsedRange.Rows.count + 3)
+    On Error GoTo 0
+    Set rng = wb.Worksheets("LABOR T&G TOTAL").Range("D1", "I" & wb.Worksheets("LABOR T&G TOTAL").UsedRange.Rows.count + 3)
+a.WriteLine "1759"
     For i = 1 To UBound(weekRoster)
+a.WriteLine "1761: " & i
         rng.Insert
         rng.Copy rng.Offset(0, -6)
     Next
+a.WriteLine "1765"
     Dim c As Integer
     c = UBound(weekRoster) + 1
     c = c * 6 + 9
     c = c + 1
+a.WriteLine "1770"
     Set rng = wb.Worksheets("LABOR T&G TOTAL").Cells(1, c)
+a.WriteLine "1772"
     rng.ColumnWidth = 18
     rng.Offset(0, 1).ColumnWidth = 18
     Set rng = wb.Worksheets("LABOR T&G TOTAL").Range("COST_CODE").Offset(1, 0)
+a.WriteLine "1776"
+    a.WriteLine "lbound: " & LBound(pCodes)
+    a.WriteLine "ubound: " & UBound(pCodes)
     For i = 0 To UBound(pCodes)
+a.WriteLine "1778: " & i
+a.WriteLine "pCode: " & pCodes(i)
+a.WriteLine "rng: " & rng.Offset(i, 0).Address
         rng.Offset(i, 0) = pCodes(i)
     Next
+    'moveShts = Split("Labor Tracking & Goals,TOOLBOX SIGN IN 1,TOOLBOX SIGN IN 2,LABOR RELEASE,EMPLOYEE EVALUATION,DAILY JOB REPORT,DAILY SIGN IN", ",")
     moveShts = Split("Labor Tracking & Goals,TOOLBOX SIGN IN,LABOR RELEASE,EMPLOYEE EVALUATION,DAILY JOB REPORT,DAILY SIGN IN", ",")
+a.WriteLine "1782"
     Dim xSht As Integer
     Dim l As Integer
     Dim crng As Range
     Dim tString As String
     For xSht = 0 To UBound(moveShts)
+a.WriteLine "1785: " & xSht
+a.WriteLine "Sheet: " & moveShts(xSht)
         lApp.Run "'loadingtimer.xlsm'!update", "Importing " & StrConv((moveShts(xSht)), vbProperCase)
         For n = 0 To UBound(wb_arr)
-            Set leadBook = Workbooks(wb_arr(n))
+           Set leadBook = Workbooks(wb_arr(n))
             With leadBook.Worksheets(moveShts(xSht))
+                wb.Activate
+                If getJobs.sheetExists(moveShts(xSht)) Then
+                    wb.Worksheets(moveShts(xSht)).Delete
+                End If
+                leadBook.Activate
+                leadBook.Unprotect
                 .Unprotect
                 .UsedRange.Validation.Delete
                 .UsedRange = .UsedRange.Value
+                Application.Visible = True
                 .name = UCase(Left(wb_arr(n), Len(wb_arr(n)) - 19) & " " & .name)
                 Debug.Print .name
                 .Protect
@@ -1587,6 +1995,7 @@ retry_emp:
             End With
         Next n
     Next xSht
+a.WriteLine "1790: " & xSht
     Dim wbn As Integer
     For wbn = 0 To UBound(wb_arr)
         Workbooks(wb_arr(wbn)).Close False
@@ -1594,28 +2003,29 @@ retry_emp:
     wb.Worksheets("ROSTER").Range("WEEKLY_HOURS").Value = 0
     wb.Worksheets("ROSTER").Range("WEEKLY_OT_HOURS").Value = 0
     Dim tCnt As Integer
-    tCnt = tc_wb.Sheets.count
+    tCnt = tc_wb.Sheets.count - 1
     For xSht = 0 To tCnt - 1
         lApp.Run "'loadingtimer.xlsm'!update", "Importing Time Card " & xSht + 1 & " of " & tCnt
-        If wb.Sheets.count > 5 Then
-            For i = 1 To wb.Sheets.count
-                If wb.Worksheets(i).name = tc_wb.Worksheets(1).name Then
-                    On Error GoTo show_hiddenApp
-                    wb.Sheets(i).Delete
-                    Application.Visible = False
-                    On Error GoTo 0
-                    Exit For
-show_hiddenApp:
-                    Application.Visible = True
-                    wb.Sheets(i).Delete
-                    Resume Next
-                End If
-            Next i
-        End If
-        wb.Worksheets("ROSTER").Range("WEEKLY_HOURS").Value = wb.Worksheets("ROSTER").Range("WEEKLY_HOURS").Value + tc_wb.Worksheets(1).Range("TOTAL_HRS").Value
-        wb.Worksheets("ROSTER").Range("WEEKLY_OT_HOURS") = wb.Worksheets("ROSTER").Range("WEEKLY_OT_HOURS") + tc_wb.Worksheets(1).Range("TOTAL_OTHRS")
-        tc_wb.Worksheets(1).Move after:=wb.Worksheets(wb.Sheets.count)
+'        If wb.Sheets.count > 5 Then
+'            For i = 1 To wb.Sheets.count
+'                If wb.Worksheets(i).name = tc_wb.Worksheets(1).name Then
+'                    On Error GoTo show_hiddenApp
+'                    wb.Sheets(i).Delete
+'                    Application.Visible = False
+'                    On Error GoTo 0
+'                    Exit For
+'show_hiddenApp:
+'                    Application.Visible = True
+'                    wb.Sheets(i).Delete
+'                    Resume Next
+'                End If
+'            Next i
+'        End If
+        wb.Worksheets("ROSTER").Range("WEEKLY_HOURS").Value = wb.Worksheets("ROSTER").Range("WEEKLY_HOURS").Value + tc_wb.Worksheets(2).Range("TOTAL_HRS").Value
+        wb.Worksheets("ROSTER").Range("WEEKLY_OT_HOURS") = wb.Worksheets("ROSTER").Range("WEEKLY_OT_HOURS") + tc_wb.Worksheets(2).Range("TOTAL_OTHRS")
+        tc_wb.Worksheets(2).Move after:=wb.Worksheets(wb.Sheets.count)
     Next xSht
+    tc_wb.Close False
     With wb.Worksheets("LABOR T&G TOTAL")
         Set rng = .Range(.Range("COST_CODE").Offset(0, 1), .Range("COST_CODE").Offset(0, 1).End(xlDown))
         If hideCells(2, rng.Offset(0, -1)) < 0 Then
@@ -1631,10 +2041,14 @@ show_hiddenApp:
         Err.Clear
     End If
     On Error GoTo 0
+    xlFile = jobNum & "_Week_" & we & "FULL"
+    wb.SaveAs xlPath & xlFile & tcRev & ".xlsm"
     wb.Close True
     If publish = vbYes Then
         timeCard.getUpdatedFiles sharePointPath, jobPath, jobNum ' Transfer updated files to sharepoint
     End If
+    Erase pCodes
+    Erase wb_arr
 End Sub
 
 Public Sub showHiddenApps()
@@ -1736,12 +2150,12 @@ rt:
     Dim tmp As Range
     ReDim weekRoster(0, eCount)
     i = 0
-    xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+    xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsm"
     On Error GoTo 10
     Workbooks.Open xlFile
     Application.Visible = False
-    On Error GoTo 0
-    Set bk = Workbooks(jobNum & "_Week_" & we & ".xlsx")
+    On Error GoTo 20
+    Set bk = Workbooks(jobNum & "_Week_" & we & ".xlsm")
     bk.Worksheets("SAVE").Visible = xlSheetVisible
     For Each tmp In bk.Worksheets("Save").Range("A1", bk.Worksheets("SAVE").Range("A1").End(xlDown))
         If tmp.Value > aVal Then aVal = tmp.Value
@@ -1765,14 +2179,21 @@ rt:
         xlEmp.emPerDiem = tmp.Offset(0, 6)
        Set weekRoster(tmp.Offset(0, 0).Value, tmp.Offset(0, 1).Value) = xlEmp
     Next tmp
-    bk.Worksheets("SAVE").Visible = xlVeryHidden
+    bk.Worksheets("SAVE").Visible = False
     bk.Close False
 
     loadRoster = 1
     Exit Function
 10:
-    
+    xlFile = jobPath & jobNum & "\Week_" & we & "\TimePackets\" & jobNum & "_Week_" & we & ".xlsx"
+
     Err.Clear
+    Resume
+20:
+    Set bk = Workbooks(jobNum & "_Week_" & we & ".xlsx")
+    Err.Clear
+    Resume Next
+30:
     loadRoster = -1
 
 End Function

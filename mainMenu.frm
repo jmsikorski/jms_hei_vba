@@ -31,6 +31,7 @@ Private Sub pjCoordinator_Click()
 End Sub
 
 Private Sub pjSuper_Click()
+    mMenu.Hide
     selWeek.Show
     jobPath = ThisWorkbook.path & "\Data\"
     sharePointPath = "C:\Users\" & Environ$("username") & "\Helix Electric Inc\TeslaTimeCard - Documents\Time Card Files\Data\"
@@ -43,8 +44,7 @@ Private Sub pjSuper_Click()
             Exit Sub
         End If
     End If
-    mMenu.Hide
-    Set sMenu = New pjSuperMenu
+    Set sMenu = New pjSupMenu
     sMenu.Show
 End Sub
 
@@ -56,7 +56,6 @@ Private Sub UserForm_Initialize()
     End With
     Dim cJob As Range
     Dim uNum As Range
-    timeCard.a
     For Each cJob In ThisWorkbook.Worksheets("JOBS").Range("jobList")
         With Me.ComboBox1
         For Each uNum In ThisWorkbook.Worksheets("USER").Range("A2", ThisWorkbook.Worksheets("USER").Range("A2").End(xlDown))

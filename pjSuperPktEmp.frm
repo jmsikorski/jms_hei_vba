@@ -149,17 +149,14 @@ Private Sub spDone_Click()
     genLeadSheets
     lApp.Run "'loadingtimer.xlsm'!stopLoading"
     Application.Wait (Now + TimeValue("00:00:03"))
-    On Error Resume Next
-    lApp.Quit
-    On Error GoTo 0
+    lApp.Visible = True
     Set lApp = Nothing
     fn = Now
-    Debug.Print st
-    Debug.Print fn
     MsgBox "Time to complete: " & Format(fn - st, "h:mm:ss")
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
     Application.EnableEvents = True
+    
     mMenu.Show
 End Sub
 

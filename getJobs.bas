@@ -60,7 +60,7 @@ End Sub
 'sheetExists checks to see if a sheet is in the current Workbook
 Function sheetExists(sheetToFind As String) As Boolean
     sheetExists = False
-    For Each Sheet In Worksheets
+    For Each Sheet In ActiveWorkbook.Worksheets
         If sheetToFind = Sheet.name Then
             sheetExists = True
             Exit Function

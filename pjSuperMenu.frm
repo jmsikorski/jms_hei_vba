@@ -118,10 +118,11 @@ Private Sub smSubmit_Click()
         Stop
     End If
     timeCard.genTimeCard
-    timeCard.updatePacket
+    'timeCard.updatePacket
     lApp.Run "'loadingtimer.xlsm'!stopLoading"
     Application.Wait (Now + TimeValue("00:00:03"))
     On Error Resume Next
+    lApp.Visible = True
     lApp.Quit
     On Error GoTo 0
     Set lApp = Nothing
